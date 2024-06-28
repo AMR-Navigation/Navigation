@@ -2,5 +2,9 @@
 src/turtlebot3_simulations
 
 # Build directories
-build 
+build
 devel
+src/turtlebot3_simulations
+
+# Other
+.gitignore
