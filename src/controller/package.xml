@@ -61,6 +61,7 @@
 
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>messages</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

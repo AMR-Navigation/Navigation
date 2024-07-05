@@ -5,6 +5,7 @@ import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from messages.msg import *
 import tf.transformations
 
 import map
@@ -15,7 +16,8 @@ from copy import deepcopy
 import numpy
 from sklearn.cluster import DBSCAN
 
-SENSITIVITY = 10 																					# the distance from occupied map nodes for a data point to be considered novel
+SENSITIVITY = 14 																					# the distance from occupied map nodes for a data point to be considered novel
+MINPOINTSFORCLUSTER = 5																				# minimum number of points for a cluster to be published
 
 def getyaw(q):																						# gets yaw from quaternion
 	x, y, z, w = q.x, q.y, q.z, q.w
@@ -27,6 +29,17 @@ def badtogood(x,y):																					# converts the bad frustrating ros coord
 def goodtobad(x,y):																					# converts good pure normal coord system to yucky bad ros coord system
 	return y, -1*x
 
+def getmeanpoint(points):																			# argument must be a list of the messages.msg.point type
+	p = point()
+	p.x = 0.
+	p.y = 0.
+	for point_ in points:
+		p.x += point_.x
+		p.y += point_.y
+	p.x /= len(points)
+	p.y /= len(points)
+	return p
+
 class Controller:
 	def __init__(self):
 		rospy.init_node("controller",anonymous=True)
@@ -34,6 +47,7 @@ class Controller:
 		self.map.display()
 		rospy.Subscriber("scan",LaserScan,self.updateranges)
 		rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)
+		self.publisher = rospy.Publisher('LidarList', UWOList, queue_size = 8)
 		self.points=[]
 		self.novelpoints=[]
 		self.cluster = []
@@ -77,19 +91,55 @@ class Controller:
 		for point in pointscpy:
 			if self.map.getdistancefromnearestpoint(point)>SENSITIVITY:
 				self.novelpoints.append(point)
-		if len(self.novelpoints)>8: self.getclusters()
+		if len(self.novelpoints)>8: 
+			self.getclusters()
+			self.publishclusters()
+		else:
+			self.novelpoints = []
 
 	def getclusters(self):
 		start = time.time()
 		formatted = numpy.array(self.novelpoints)
 		res = DBSCAN(eps=.1,min_samples=3).fit(formatted)																	# epsilon is max distance for points to be neighbors, min_sampes is the number of samples for core points
 		stop = time.time()
+		print stop-start
 		self.cluster = list(res.labels_)
+
+	def publishclusters(self):
+		# Create the list of clusters
+		uwolist = UWOList()
+		for i in range(len(self.novelpoints)):
+			if self.cluster[i]==-1: continue																				# point is noise, skip it
+			if self.cluster[i]>len(uwolist.objects)-1: uwolist.objects.append(UWO())										# add a new UWO
+			npoint = point()																								# create the point
+			npoint.x = self.novelpoints[i][0]
+			npoint.y = self.novelpoints[i][1]
+			uwolist.objects[self.cluster[i]].points.append(npoint)															# properly add the point
+
+		# Filter the list and set the means
+		toremove = []
+		for uwo in uwolist.objects:
+			if len(uwo.points)<MINPOINTSFORCLUSTER: toremove.append(uwo)
+			else: uwo.mean = getmeanpoint(uwo.points)
+		for uwo in toremove: uwolist.objects.remove(uwo)
+
+		# Stamp it
+		uwolist.header.stamp = rospy.Time.now()
+		uwolist.header.frame_id = "uwolist"
+
+		# Send it
+		self.publisher.publish(uwolist)
+
+
+
 
 
 	def display(self):
 		self.map.displaypose(self.x, self.y)
-		self.map.displayscan(self.points,self.novelpoints,self.cluster)
+		P = deepcopy(self.points)
+		NP = deepcopy(self.novelpoints)
+		C = deepcopy(self.cluster)
+		self.map.displayscan(P,NP,C)
 
 if __name__=='__main__':
 	C = Controller()
