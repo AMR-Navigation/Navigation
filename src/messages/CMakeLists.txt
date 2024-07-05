@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
    point.msg
    UWO.msg
    UWOList.msg
+   detection.msg
  )
 
 ## Generate services in the 'srv' folder
