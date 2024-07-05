@@ -5,6 +5,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import requests
+import json
+from messages.msg import detection
 
 APIKEY = open("key.txt", 'r').read()
 APIURL = "https://detect.roboflow.com/hri-o1n8g/1?api_key=" + APIKEY
@@ -22,7 +24,7 @@ class ObjectDetectorNode:
         rospy.init_node('object_detector_node', anonymous=True)
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, self.image_callback)
-        self.result_pub = rospy.Publisher('/object_detection_results', Image, queue_size=1)
+        self.result_pub = rospy.Publisher('/object_detection_results', detection, queue_size=1)
 
     def image_callback(self, data):
         try:
@@ -39,16 +41,28 @@ class ObjectDetectorNode:
         detection_result = predict(img_bytes)
 
         if detection_result is not None:
-            # Log the detection result
-            rospy.loginfo("Detection Result: {}".format(detection_result))
+            # Parse the detection result
+            detection_json = json.loads(detection_result)
+            predictions = detection_json.get('predictions', [])
+            for pred in predictions:
+                detection_msg = detection()
+                detection_msg.classification = pred.get('class', '')
+                detection_msg.confidence = pred.get('confidence', 0.0)
+                detection_msg.x = pred.get('x', 0.0)
+                detection_msg.y = pred.get('y', 0.0)
+                detection_msg.width = pred.get('width', 0.0)
+                detection_msg.height = pred.get('height', 0.0)
 
-            # Publish the original image for visualization (optional)
-            self.result_pub.publish(data)
+                # Log the detection result
+                rospy.loginfo("Class: {}, Confidence: {}, X: {}, Y: {}, Width: {}, Height: {}".format(
+                    detection_msg.classification, detection_msg.confidence, detection_msg.x, detection_msg.y,
+                    detection_msg.width, detection_msg.height))
+
+                # Publish the detection result
+                self.result_pub.publish(detection_msg)
+
         else:
             rospy.logwarn("Failed to get valid detection result.")
-
-        # Debug: Print the API response directly
-        rospy.loginfo("API Response: {}".format(detection_result))
 
 if __name__ == '__main__':
     try:
@@ -56,4 +70,3 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
-
