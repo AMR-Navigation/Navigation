@@ -3,10 +3,13 @@
 import rospy
 from messages.msg import *
 from geometry_msgs.msg import PoseWithCovarianceStamped
+import tf.transformations
 
 from time import * 
 from math import *
 from copy import deepcopy
+
+from laser import *
 
 
 class Fusion:
@@ -15,11 +18,17 @@ class Fusion:
 		rospy.Subscriber("LidarList",UWOList,self.updatelaser)
 		rospy.Subscriber("object_detection_results",detection,self.updatedetections)
 		rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)
+		self.frame = rospy.Time.now()																		# for synchronization purposes
+
+		# Pose variables
+		self.yaw = 0
+		self.x = 0
+		self.y = 0
 
 
 	def updatelaser(self,data):
 		print("Got new laser data:")
-		print(data.header)
+		self.laserarc = getarc(data,self.x,self.y)
 		print ""
 
 	def updatedetections(self,data):
@@ -29,8 +38,11 @@ class Fusion:
 
 	def updatepose(self,data):
 		print "Got new pose data"
-		print data.header
+		self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,data.pose.pose.orientation.y,data.pose.pose.orientation.z,data.pose.pose.orientation.w])[2]
+		self.x = data.pose.pose.position.x
+		self.y = data.pose.pose.position.y
 		print ""
+		self.frame = rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs)
 
 
 if __name__=="__main__":
