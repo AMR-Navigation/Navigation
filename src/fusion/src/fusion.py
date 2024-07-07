@@ -28,6 +28,8 @@ class Fusion:
 		# Laser variables
 		self.laserarcs = []
 
+		# 
+
 
 	def updatelaser(self,data):
 		print("Got new laser data:")
@@ -44,16 +46,29 @@ class Fusion:
 
 	def updatepose(self,data):
 		print "Got new pose data"
+		# Set class variables to use in other callbacks
 		self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,data.pose.pose.orientation.y,data.pose.pose.orientation.z,data.pose.pose.orientation.w])[2]
 		self.x = data.pose.pose.position.x
 		self.y = data.pose.pose.position.y
 		print ""
-		self.frame = rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs)
+		self.frame = rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs)								# try to sync with this probably
+
+	def fuse(self):
+		pass
+		# CURRENT PLAN:
+		# sync with detections and laser arcs
+		# 
+		# using previously compiled list as posterior,
+		# attempt to update the locations of each object
+		# 
+		# then take all remaining data and,
+		# for every arc in laser arcs:
+		# 		attempt to identify it, if impossible then mark as unknown
 
 
 if __name__=="__main__":
 	F = Fusion()
 	print("Initialized.")
 	while True:
-		#
+		F.fuse()
 		sleep(.5)
