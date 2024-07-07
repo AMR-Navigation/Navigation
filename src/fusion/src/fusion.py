@@ -25,10 +25,16 @@ class Fusion:
 		self.x = 0
 		self.y = 0
 
+		# Laser variables
+		self.laserarcs = []
+
 
 	def updatelaser(self,data):
 		print("Got new laser data:")
-		self.laserarc = getarc(data,self.x,self.y)
+		self.laserarcs = []
+		for obj in data.objects:
+			self.laserarcs.append( getarc(obj,self.yaw,self.x,self.y) )
+		#print rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs), '|', self.frame
 		print ""
 
 	def updatedetections(self,data):
