@@ -10,6 +10,7 @@ from math import *
 from copy import deepcopy
 
 from laser import *
+from yolo_fov import *
 
 
 class Fusion:
@@ -28,6 +29,8 @@ class Fusion:
 		# Laser variables
 		self.laserarcs = []
 
+		self.detectionarcs = []
+
 		# 
 
 
@@ -40,12 +43,21 @@ class Fusion:
 		print ""
 
 	def updatedetections(self,data):
-		print "Got new YOLO data"
+		print ("Got new YOLO data")
 		print data.header
+		for detection in data.detections:
+			x = detection.x
+			y = detection.y
+			width = detection.width
+			height = detection.height
+
+			center_x, center_y = box_center(x, y, width, height)
+			self.detectionarcs.append( calc_angle(center_x, center_y) )
+
 		print ""
 
 	def updatepose(self,data):
-		print "Got new pose data"
+		print ("Got new pose data")
 		# Set class variables to use in other callbacks
 		self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,data.pose.pose.orientation.y,data.pose.pose.orientation.z,data.pose.pose.orientation.w])[2]
 		self.x = data.pose.pose.position.x

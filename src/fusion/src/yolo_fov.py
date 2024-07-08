@@ -22,7 +22,13 @@ def box_center(x,y,width,height):
     center_y = y + height / 2
     return center_x, center_y
 
-def calc_angle(center_x, center_y, principal_point_x, principal_point_y, focal_length_x, focal_length_y):
+def calc_angle(center_x, center_y):
+
+    global principal_point_x, principal_point_y, focal_length_x, focal_length_y
+    
     angle_x = math.atan2((center_x - principal_point_x), focal_length_x)
     angle_y = math.atan2((center_y - principal_point_y), focal_length_y)
     return math.degrees(angle_x), math.degrees(angle_y)
+
+
+
