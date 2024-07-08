@@ -1,0 +1,5 @@
+# Ignore ROS devel and build directories
+devel/
+build/
+
+src/my_turtlebot3_package/scripts/key.txt
