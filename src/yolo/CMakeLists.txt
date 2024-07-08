@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(my_turtlebot3_package)
+project(yolo)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,28 +8,11 @@ project(my_turtlebot3_package)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
   rospy
   sensor_msgs
   std_msgs
-  cv_bridge
 )
-
-catkin_python_setup()
-
-catkin_package(
-  CATKIN_DEPENDS rospy std_msgs sensor_msgs cv_bridge
-)
-
-# Specify where to install the Python scripts
-catkin_install_python(PROGRAMS scripts/yolo_node.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-# Specify additional locations of header files
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
-
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -122,8 +105,8 @@ include_directories(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES my_turtlebot3_package
-#  CATKIN_DEPENDS rospy sensor_msgs std_msgs
+#  LIBRARIES yolo
+   CATKIN_DEPENDS cv_bridge rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -140,7 +123,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/my_turtlebot3_package.cpp
+#   src/${PROJECT_NAME}/yolo.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -151,7 +134,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/my_turtlebot3_package_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/yolo_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -215,7 +198,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_my_turtlebot3_package.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_yolo.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
