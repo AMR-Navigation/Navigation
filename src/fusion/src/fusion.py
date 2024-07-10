@@ -72,12 +72,7 @@ class Fusion:
 
         print("Detectionarcs: ", self.detectionarcs)
         
-	#Processes the YOLO detection data and apends the calculated angles to detectionarcs
-    def updatedetections2(self,detection):
-        print("Got new YOLO data")
-        print(detection.classification, self.yaw/pi, getarcfrombox(detection.x,detection.width, self.yaw)[0]/pi, getarcfrombox(detection.x,detection.width, self.yaw)[1]/pi)
-        self.detections.append(detection)
-        self.detectionarcs.append(getarcfrombox(detection.x,detection.width, self.yaw))
+
 
 	#This function updates the robots current pose based on the amcl_pose topic.
     def updatepose(self,data):
@@ -90,6 +85,20 @@ class Fusion:
         self.x = data.pose.pose.position.x
         self.y = data.pose.pose.position.y
 
+    def match_lidar_yolo(self):
+        matched_objects = []
+        for arc in self.laserarcs:
+            min_angle, max_angle = arc
+            for angle_x, angle_y in self.detectionarcs:
+                if min_angle <= angle_x <= max_angle:
+                    matched_objects.append((arc, (angle_x, angle_y)))
+                    break
+        return matched_objects
+    
+    def process_unmatched_lidar(self, matched_objects):
+        matched_lidar_arcs = [match[0] for match in matched_objects]
+        unknown_arcs = [arc for arc in self.laserarcs if arc not in matched_lidar_arcs]
+        return unknown_arcs
     
 
     def fuse(self):
@@ -115,3 +124,11 @@ if __name__ == "__main__":
     F = Fusion()
     print("Initialized.")
     rospy.spin()
+
+
+# #Processes the YOLO detection data and apends the calculated angles to detectionarcs
+    # def updatedetections2(self,detection):
+    #     print("Got new YOLO data")
+    #     print(detection.classification, self.yaw/pi, getarcfrombox(detection.x,detection.width, self.yaw)[0]/pi, getarcfrombox(detection.x,detection.width, self.yaw)[1]/pi)
+    #     self.detections.append(detection)
+    #     self.detectionarcs.append(getarcfrombox(detection.x,detection.width, self.yaw))
