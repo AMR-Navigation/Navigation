@@ -3,6 +3,7 @@ from copy import deepcopy
 from Queue import Queue
 from time import time
 from random import *
+import os
 
 RESOLUTION = .05
 ORIGIN = (-7,-10)
@@ -11,7 +12,8 @@ ORIGIN = (-7,-10)
 
 class Map():
 	def __init__(self):
-		self.mapfile = open("/home/dan/map.pgm",'rb')
+		path = "~/map.pgm"
+		self.mapfile = open(os.path.expanduser(path),'rb')
 		self.setupgui()															# prepare tkinter stuff
 		self.getmetadata()														# get info from map file
 		self.setbegin()															# get the beginning position of the map data
