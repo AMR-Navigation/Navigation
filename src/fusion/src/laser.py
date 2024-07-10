@@ -1,13 +1,8 @@
 import rospy
 from messages.msg import *
-from geometry_msgs.msg import PoseWithCovarianceStamped
-import tf.transformations
 
 from time import * 
-from math import *
-from copy import deepcopy
-
-from laser import *
+from math import atan2
 
 
 def badtogood(x,y):
