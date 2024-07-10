@@ -8,6 +8,8 @@ import requests
 import json
 from messages.msg import detection
 
+import client
+
 APIKEY = open("key.txt", 'r').read()[:-1]
 print '(', APIKEY, ')'
 APIURL = "https://detect.roboflow.com/hri-o1n8g/1?api_key=" + APIKEY
@@ -39,14 +41,13 @@ class ObjectDetectorNode:
 		img_bytes = img_encoded.tostring()
 
 		# Perform object detection
-		detection_result = predict(img_bytes)
+		detection_result = client.inference(img_bytes)
 
 		print detection_result
 
 		if detection_result is not None:
 			# Parse the detection result
-			detection_json = json.loads(detection_result)
-			predictions = detection_json.get('predictions', [])
+			predictions = json.loads(detection_result)
 			for pred in predictions:
 				detection_msg = detection()
 				detection_msg.classification = pred.get('class', '')

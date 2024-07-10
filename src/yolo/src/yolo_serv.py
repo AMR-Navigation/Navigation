@@ -29,18 +29,18 @@ def process_image_frame(frame):
 
             detection = {
                 'class': class_name,
-                'confidence': confidence,
-                'x': x,
-                'y': y,
-                'width': width,
-                'height': height
+                'confidence': float(confidence),
+                'x': float(x),
+                'y': float(y),
+                'width': float(width),
+                'height': float(height)
             }
             detections.append(detection)
 
     return detections
 
 
-# The rest of the code is for testing purposes only (inserting a jpg image)
+"""# The rest of the code is for testing purposes only (inserting a jpg image)
 with open("person.jpg", "rb") as image_file:
     base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
@@ -50,4 +50,4 @@ nparr = np.frombuffer(decoded_image, np.uint8)
 frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
 # Process the decoded image frame
-process_image_frame(frame)
+process_image_frame(frame)"""
