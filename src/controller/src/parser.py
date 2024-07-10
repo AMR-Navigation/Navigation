@@ -98,6 +98,7 @@ class Parser():
 					tags="point")
 
 	def displaypose(self):
+		;
 		self.canvas.create_rectangle(
 			(self.transtogui(self.pose.position.x, self.pose.position.y)),
 			(self.transtogui(self.pose.position.x, self.pose.position.y)),

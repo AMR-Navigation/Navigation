@@ -98,11 +98,8 @@ class Controller:
 			self.novelpoints = []
 
 	def getclusters(self):
-		start = time.time()
 		formatted = numpy.array(self.novelpoints)
 		res = DBSCAN(eps=.1,min_samples=3).fit(formatted)																	# epsilon is max distance for points to be neighbors, min_sampes is the number of samples for core points
-		stop = time.time()
-		print stop-start
 		self.cluster = list(res.labels_)
 
 	def publishclusters(self):
