@@ -7,6 +7,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from messages.msg import *
 import tf.transformations
+from message_filters import Subscriber, TimeSynchronizer
 
 import map
 
@@ -16,7 +17,7 @@ from copy import deepcopy
 import numpy
 from sklearn.cluster import DBSCAN
 
-SENSITIVITY = 14 																					# the distance from occupied map nodes for a data point to be considered novel
+SENSITIVITY = 12 																					# the distance from occupied map nodes for a data point to be considered novel
 MINPOINTSFORCLUSTER = 5																				# minimum number of points for a cluster to be published
 
 def getyaw(q):																						# gets yaw from quaternion
@@ -45,8 +46,10 @@ class Controller:
 		rospy.init_node("controller",anonymous=True)
 		self.map = map.Map()
 		self.map.display()
-		rospy.Subscriber("scan",LaserScan,self.updateranges)
-		rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)
+		self.lasersub = Subscriber("scan",LaserScan)
+		self.posesub = Subscriber("amcl_pose", PoseWithCovarianceStamped)
+		self.ts = TimeSynchronizer([self.lasersub, self.posesub], 10)
+		self.ts.registerCallback(self.updaterangesandpose)
 		self.publisher = rospy.Publisher('LidarList', UWOList, queue_size = 8)
 		self.points=[]
 		self.novelpoints=[]
@@ -57,6 +60,26 @@ class Controller:
 
 		self.posestamp = rospy.Time(0,0)
 		self.rangestamp=rospy.Time(0,0)
+
+	def updaterangesandpose(self,rangemsg,posemsg):
+		ranges = deepcopy(rangemsg)
+		msg = deepcopy(posemsg)
+
+		# Set pose variables
+		self.x, self.y = badtogood(msg.pose.pose.position.x, msg.pose.pose.position.y)
+		self.pose = msg.pose.pose
+
+		self.points = []
+		for r in range(len(ranges.ranges)):
+			if ranges.ranges[r]==float('inf'): continue
+			x, y = goodtobad(self.x, self.y)
+			theta = getyaw(self.pose.orientation)+r*ranges.angle_increment
+			if theta>pi: theta = -2*pi + theta
+			h = ranges.ranges[r]
+
+			self.points.append((badtogood(x+h*cos(theta), y+h*sin(theta)))) # final calculation
+
+		
 
 	def updateranges(self,data):
 		# Sync with pose
@@ -91,7 +114,7 @@ class Controller:
 		for point in pointscpy:
 			if self.map.getdistancefromnearestpoint(point)>SENSITIVITY:
 				self.novelpoints.append(point)
-		if len(self.novelpoints)>8: 
+		if len(self.novelpoints)>6: 
 			self.getclusters()
 			self.publishclusters()
 		else:
@@ -99,7 +122,7 @@ class Controller:
 
 	def getclusters(self):
 		formatted = numpy.array(self.novelpoints)
-		res = DBSCAN(eps=.1,min_samples=3).fit(formatted)																	# epsilon is max distance for points to be neighbors, min_sampes is the number of samples for core points
+		res = DBSCAN(eps=.15,min_samples=3).fit(formatted)																	# epsilon is max distance for points to be neighbors, min_sampes is the number of samples for core points
 		self.cluster = list(res.labels_)
 
 	def publishclusters(self):
