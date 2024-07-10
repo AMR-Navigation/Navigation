@@ -4,6 +4,7 @@ import rospy
 from messages.msg import *
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import tf.transformations
+import message_filters
 
 from time import * 
 from math import *
@@ -14,27 +15,34 @@ from yolo_fov import *
 
 
 class Fusion:
-	def __init__(self):
-		rospy.init_node("fusion",anonymous=False)
-		rospy.Subscriber("LidarList",UWOList,self.updatelaser)
-		rospy.Subscriber("object_detection_results",detection,self.updatedetections2)
-		rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)
-		self.frame = rospy.Time.now()																		# for synchronization purposes
+	#This function initilazes the ROS Node and sets up the LidarList, ObjectDetection subscribers. It aslo uses message filter to synch the lidar and YOLO detection messages with sync_callback
+    def __init__(self):
+        rospy.init_node("fusion", anonymous=False)
+        self.laser_sub = message_filters.Subscriber("LidarList", UWOList)		#Laser subscriber
+        self.detection_sub = message_filters.Subscriber("object_detection_results", detection)		#Detection subscriber
+        self.pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)	#Pose subscriber
+        
+        # Time synchronizer
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.laser_sub, self.detection_sub], queue_size=10, slop=0.1)
+        self.ts.registerCallback(self.sync_callback)
+        
+        self.frame = rospy.Time.now()  # for synchronization purposes
 
-		# Pose variables
-		self.yaw = 0
-		self.x = 0
-		self.y = 0
+        # Initialize pose data storage variables
+        self.yaw = 0
+        self.x = 0
+        self.y = 0
 
-		# Laser variables
-		self.laserarcs = []
-		self.laserobjs = []
-
-		# YOLO variables
-		self.detectionarcs = []
-		self.detections = []
+        # Laser and detection variables
+        self.laserarcs = []
+        self.detectionarcs = []
 
 		# 
+
+	def sync_callback(self, lidar_data, detection_data):
+        self.updatelaser(lidar_data)
+        self.updatedetections(detection_data)
+        self.fuse()
 
 	# Arc: (min, max) using the ROS rotation system, e.g. relative to vertical axis, counter-clockwise, and like
 	# 			0
@@ -52,21 +60,17 @@ class Fusion:
 	# Arc: (fov, direction)
 	def updatedetections(self,detection):
 		pass
-		print ("Got new YOLO data")
-		self.directionarcs = []
-		#for detection in data.detections:
-		x = detection.x
-		y = detection.y
-		width = detection.width
-		height = detection.height
+		print("Got new YOLO data")
 
-		center_x, center_y = box_center(x, y, width, height)
-		self.detectionarcs.append( calc_angle(center_x, center_y) )
-		self.detections.append(detection)
-		print self.detectionarcs
-		print self.detections
+        x = detection.x
+        y = detection.y
+        width = detection.width
+        height = detection.height
 
-		print ""
+        center_x, center_y = box_center(x, y, width, height)
+        self.detectionarcs.append(calc_angle(center_x, center_y))
+
+        print("Detectionarcs: ", self.detectionarcs)
 
 	def updatedetections2(self,detection):
 		print("Got new YOLO data")
@@ -75,13 +79,16 @@ class Fusion:
 		self.detectionarcs.append(getarcfrombox(detection.x,detection.width, self.yaw))
 
 	def updatepose(self,data):
-		print ("Got new pose data")
-		# Set class variables to use in other callbacks
-		self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,data.pose.pose.orientation.y,data.pose.pose.orientation.z,data.pose.pose.orientation.w])[2]
-		self.x = data.pose.pose.position.x
-		self.y = data.pose.pose.position.y
-		print ""
-		self.frame = rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs)								# try to sync with this probably
+		print("Got new pose data")
+        # Set class variables to use in other callbacks
+        self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,
+                                                             data.pose.pose.orientation.y,
+                                                             data.pose.pose.orientation.z,
+                                                             data.pose.pose.orientation.w])[2]
+        self.x = data.pose.pose.position.x
+        self.y = data.pose.pose.position.y
+
+	
 
 	def fuse(self):
 		pass
@@ -102,9 +109,7 @@ class Fusion:
 		# 		attempt to identify it, if impossible then mark as unknown
 
 
-if __name__=="__main__":
-	F = Fusion()
-	print("Initialized.")
-	while True:
-		F.fuse()
-		sleep(.5)
+if __name__ == "__main__":
+    F = Fusion()
+    print("Initialized.")
+    rospy.spin()
