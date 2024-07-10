@@ -6,7 +6,7 @@ import numpy as np
 # Step 1: Load YOLOv8 Model
 model_path = 'best.pt'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = torch.load(model_path, map_location=device)
+model = torch.load(model_path, map_location=device)['model']
 model.eval()
 
 # Step 2: Preprocess the Image
@@ -57,6 +57,7 @@ def postprocess_yolov8_outputs(outputs):
 # Example of processing an image frame
 def process_image_frame(frame):
     detections = run_inference(frame)
+    return detections
     for detection in detections:
         print(f"Class: {detection['class']}, Confidence: {detection['confidence']:.2f}")
         print(f"Center (x, y): ({detection['x']}, {detection['y']})")
