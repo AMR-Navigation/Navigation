@@ -1,24 +1,15 @@
 import socket
 import struct
-import errno
 
-HOST, PORT = "localhost", 9998
+HOST, PORT = "localhost", 9999
 
 def inference(image):
 	image = image.encode("base64")
 	print "Sending ",len(image)," bytes"
 
 	# Connect to the socket
-	try:
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		sock.connect((HOST, PORT))
-	except socket.error as e:
-			if e.errno == errno.ECONNREFUSED:
-				print("Connection refused. Did you forget to start the server ????")
-				return
-			else:
-				print("Socket error: {}".format(e))
-				return
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sock.connect((HOST, PORT))
 
 	# Send all the data as packets of length 1024
 	i=1024

@@ -10,17 +10,17 @@ from messages.msg import detection
 
 import client
 
-APIKEY = open("key.txt", 'r').read()[:-1]
-print '(', APIKEY, ')'
-APIURL = "https://detect.roboflow.com/hri-o1n8g/1?api_key=" + APIKEY
+# APIKEY = open("key.txt", 'r').read()[:-1]
+# print '(', APIKEY, ')'
+# APIURL = "https://detect.roboflow.com/hri-o1n8g/1?api_key=" + APIKEY
 
-def predict(image_data, overlap=30, confidence=40, stroke=1, labels=False, _format="json"):
-	session = requests.Session()
-	headers = {"Content-Type": "application/x-www-form-urlencoded"}
-	params = "&overlap={}&confidence={}&stroke={}&labels={}&format={}".format(
-		str(overlap), str(confidence), str(stroke), str(labels), _format)
-	resp = session.post(APIURL + params, headers=headers, data=image_data.encode("base64"))
-	return resp.text
+# def predict(image_data, overlap=30, confidence=40, stroke=1, labels=False, _format="json"):
+# 	session = requests.Session()
+# 	headers = {"Content-Type": "application/x-www-form-urlencoded"}
+# 	params = "&overlap={}&confidence={}&stroke={}&labels={}&format={}".format(
+# 		str(overlap), str(confidence), str(stroke), str(labels), _format)
+# 	resp = session.post(APIURL + params, headers=headers, data=image_data.encode("base64"))
+# 	return resp.text
 	
 class ObjectDetectorNode:
 	def __init__(self):
@@ -43,7 +43,7 @@ class ObjectDetectorNode:
 		# Perform object detection
 		detection_result = client.inference(img_bytes)
 
-		print detection_result
+		#print (detection_result)
 
 		if detection_result is not None:
 			# Parse the detection result
