@@ -42,7 +42,7 @@ class Fusion:
     def sync_callback(self, lidar_data, detection_data):
         self.updatelaser(lidar_data)
         self.updatedetections(detection_data)
-        #self.fuse()
+        self.fuse()
 
     # Arc: (min, max) using the ROS rotation system, e.g. relative to vertical axis, counter-clockwise, and like
     #             0
@@ -54,8 +54,10 @@ class Fusion:
         for obj in data.objects:
             angles, coords = getarc(obj,self.yaw,self.x,self.y)
             self.laserarcs.append((angles, coords))
+            # print("Coordinates: ", coords)
+            # print("Laser Angles: ", angles)
         #print rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs), '|', self.frame
-        print ("Laserarcs: ", self.laserarcs)
+        #print ("Laserarcs: ", self.laserarcs)
 
     # Arc: (fov, direction)
     def updatedetections(self,detection):
@@ -70,7 +72,7 @@ class Fusion:
         # center_x, center_y = box_center(x, y, width, height)
         self.detectionarcs.append(calc_angle(center_x, center_y))       #This array holds the horizontal and vertical angles for the center of the bouding box
 
-        print("Detectionarcs: ", self.detectionarcs)
+        #print("Bouding Box angle: ", self.detectionarcs)
         
 
 
@@ -85,17 +87,34 @@ class Fusion:
         self.x = data.pose.pose.position.x
         self.y = data.pose.pose.position.y
 
+    # def match_lidar_yolo(self):
+    #     matched_objects = []
+    #     for angles, coords in self.laserarcs:
+    #         min_angle, max_angle = angles
+    #         for angle_x, angle_y in self.detectionarcs:
+    #             #Check if YOLO detection angle is within Lidar arc
+    #             if min_angle <= angle_x <= max_angle:
+    #                 matched_objects.append(coords)     
+    #                 break       #Once matched, break the inner loop
+    #     return matched_objects
+
     def match_lidar_yolo(self):
         matched_objects = []
         for angles, coords in self.laserarcs:
             min_angle, max_angle = angles
-            for detection_arc in self.detectionarcs:
-                angle_x, angle_y = detection_arc
+            for angle_x, angle_y in self.detectionarcs:
+                print("Testing Coordinate: ", coords)
+                print ("Min: ", min_angle)
+                print ("Min: ", max_angle)
+                print("Angle_x", angle_x)
                 #Check if YOLO detection angle is within Lidar arc
                 if min_angle <= angle_x <= max_angle:
-                    matched_objects.append(coords)     #Instead of storing the angles, I want to store the arcs matching coordinate points given to me by UWO list which are labeled mean.x and mean.y
+                    matched_objects.append(coords)     
                     break       #Once matched, break the inner loop
+
+        print("Hello: ", matched_objects)
         return matched_objects
+    
     
     def process_unmatched_lidar(self, matched_objects):
         matched_coords = [match[1] for match in matched_objects] #Extracting matched coordinate points
@@ -105,19 +124,19 @@ class Fusion:
 
     def fuse(self):
         matched_objects = self.match_lidar_yolo()         
-        print(matched_objects)                
+        print("Matched Objects",matched_objects)                
         unknown_arcs = self.process_unmatched_lidar(matched_objects)    
-        print    
+        print("Unmatched Objects", unknown_arcs)    
 
-    # Handle matched objects
-    for arc, box in matched_objects:
-        # Implement logic to update object locations based on arc and box
-        print(f"Matched arc: {arc} with box: {box}")
+    # # Handle matched objects
+    # for arc, box in matched_objects:
+    #     # Implement logic to update object locations based on arc and box
+    #     print(f"Matched arc: {arc} with box: {box}")
 
-    # Handle unknown objects
-    for arc in unknown_arcs:
-        # Implement logic to handle unknown arcs
-        print(f"Unknown arc: {arc}")
+    # # Handle unknown objects
+    # for arc in unknown_arcs:
+    #     # Implement logic to handle unknown arcs
+    #     print(f"Unknown arc: {arc}")
 
 
         # CURRENT PLAN:
