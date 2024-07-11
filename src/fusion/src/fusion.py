@@ -52,7 +52,8 @@ class Fusion:
         print("Got new laser data:")
         self.laserarcs = []
         for obj in data.objects:
-            self.laserarcs.append( (getarc(obj,self.yaw,self.x,self.y)) )
+            angles, coords = getarc(obj,self.yaw,self.x,self.y)
+            self.laserarcs.append((angles, coords))
         #print rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs), '|', self.frame
         print ("Laserarcs: ", self.laserarcs)
 
@@ -86,20 +87,20 @@ class Fusion:
 
     def match_lidar_yolo(self):
         matched_objects = []
-        for lidar_arc in self.laserarcs:
-            min_angle, max_angle = lidar_arc
+        for angles, coords in self.laserarcs:
+            min_angle, max_angle = angles
             for detection_arc in self.detectionarcs:
                 angle_x, angle_y = detection_arc
                 #Check if YOLO detection angle is within Lidar arc
                 if min_angle <= angle_x <= max_angle:
-                    matched_objects.append((obj.mean.x, obj.mean.y))     #Instead of storing the angles, I want to store the coordinate points given to me by UWO list
+                    matched_objects.append(coords)     #Instead of storing the angles, I want to store the arcs matching coordinate points given to me by UWO list which are labeled mean.x and mean.y
                     break       #Once matched, break the inner loop
         return matched_objects
     
     def process_unmatched_lidar(self, matched_objects):
-        matched_lidar_arcs = [match[0] for match in matched_objects]
-        unknown_arcs = [arc for arc in self.laserarcs if arc not in matched_lidar_arcs] #Instead of storing the arc of the lidar, I want to store the corresponding coordinate points(x and y) given to me by UWO list messages where it is stored as "mean"
-        return unknown_arcs
+        matched_coords = [match[1] for match in matched_objects] #Extracting matched coordinate points
+        unknown_coords = [coords for _, coords in self.laserarcs if coords not in matched_coords] #Instead of storing the arc of the lidar, I want to store the corresponding coordinate points(x and y) given to me by UWO list messages where it is stored as "mean"
+        return unknown_coords
     
 
     def fuse(self):
