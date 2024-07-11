@@ -19,17 +19,18 @@ focal_length_y = (image_height / 2) / math.tan(math.radians(vertical_fov / 2))
 principal_point_x = image_width / 2
 principal_point_y = image_width / 2
 
-def box_center(x,y,width,height):
-    center_x = x 
-    center_y = y 
-    return x, y
+# def box_center(x,y,width,height):
+#     center_x = x 
+#     center_y = y 
+#     return x, y
 
+#This function calculates the angle for the center of the bouding box relative to the camera's optical axis.
 def calc_angle(center_x, center_y):
 
     global principal_point_x, principal_point_y, focal_length_x, focal_length_y
     
-    angle_x = math.atan2((center_x - principal_point_x), focal_length_x) 			# the length of the arc in radians
-    angle_y = math.atan2((center_y - principal_point_y), focal_length_y)
+    angle_x = math.atan2((center_x - principal_point_x), focal_length_x) 			# horizontal angle relative to optical azis
+    angle_y = math.atan2((center_y - principal_point_y), focal_length_y)            #vertical angle relative to optical axis
     return angle_x, angle_y
 
 

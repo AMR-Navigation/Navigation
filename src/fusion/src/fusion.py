@@ -62,13 +62,13 @@ class Fusion:
         pass
         print("Got new YOLO data")
 
-        x = detection.x
-        y = detection.y
-        width = detection.width
-        height = detection.height
+        center_x = detection.x          #x-coordinate for center of the bounding box
+        center_y = detection.y          #y-coordinate for center of the bounding box
+        # width = detection.width
+        # height = detection.height
 
-        center_x, center_y = box_center(x, y, width, height)
-        self.detectionarcs.append(calc_angle(center_x, center_y))
+        # center_x, center_y = box_center(x, y, width, height)
+        self.detectionarcs.append(calc_angle(center_x, center_y))       #This array holds the horizontal and vertical angles for the center of the bouding box
 
         print("Detectionarcs: ", self.detectionarcs)
         
