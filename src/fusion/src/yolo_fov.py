@@ -20,17 +20,17 @@ principal_point_x = image_width / 2
 principal_point_y = image_width / 2
 
 def box_center(x,y,width,height):
-    center_x = x + width / 2
-    center_y = y + height / 2
-    return center_x, center_y
+    center_x = x 
+    center_y = y 
+    return x, y
 
 def calc_angle(center_x, center_y):
 
     global principal_point_x, principal_point_y, focal_length_x, focal_length_y
     
-    angle_x = math.atan2((center_x - principal_point_x), focal_length_x) 			# the length of the arc
+    angle_x = math.atan2((center_x - principal_point_x), focal_length_x) 			# the length of the arc in radians
     angle_y = math.atan2((center_y - principal_point_y), focal_length_y)
-    return math.degrees(angle_x), math.degrees(angle_y)
+    return angle_x, angle_y
 
 
 
