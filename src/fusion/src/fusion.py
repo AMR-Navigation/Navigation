@@ -42,7 +42,7 @@ class Fusion:
     def sync_callback(self, lidar_data, detection_data):
         self.updatelaser(lidar_data)
         self.updatedetections(detection_data)
-        self.fuse()
+        #self.fuse()
 
     # Arc: (min, max) using the ROS rotation system, e.g. relative to vertical axis, counter-clockwise, and like
     #             0
@@ -52,10 +52,9 @@ class Fusion:
         print("Got new laser data:")
         self.laserarcs = []
         for obj in data.objects:
-            self.laserobjs.append(obj)
             self.laserarcs.append( (getarc(obj,self.yaw,self.x,self.y)) )
         #print rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs), '|', self.frame
-        print ""
+        print ("Laserarcs: ", self.laserarcs)
 
     # Arc: (fov, direction)
     def updatedetections(self,detection):
@@ -87,27 +86,44 @@ class Fusion:
 
     def match_lidar_yolo(self):
         matched_objects = []
-        for arc in self.laserarcs:
-            min_angle, max_angle = arc
-            for angle_x, angle_y in self.detectionarcs:
+        for lidar_arc in self.laserarcs:
+            min_angle, max_angle = lidar_arc
+            for detection_arc in self.detectionarcs:
+                angle_x, angle_y = detection_arc
+                #Check if YOLO detection angle is within Lidar arc
                 if min_angle <= angle_x <= max_angle:
-                    matched_objects.append((arc, (angle_x, angle_y)))
-                    break
+                    matched_objects.append((obj.mean.x, obj.mean.y))     #Instead of storing the angles, I want to store the coordinate points given to me by UWO list
+                    break       #Once matched, break the inner loop
         return matched_objects
     
     def process_unmatched_lidar(self, matched_objects):
         matched_lidar_arcs = [match[0] for match in matched_objects]
-        unknown_arcs = [arc for arc in self.laserarcs if arc not in matched_lidar_arcs]
+        unknown_arcs = [arc for arc in self.laserarcs if arc not in matched_lidar_arcs] #Instead of storing the arc of the lidar, I want to store the corresponding coordinate points(x and y) given to me by UWO list messages where it is stored as "mean"
         return unknown_arcs
     
 
     def fuse(self):
-        pass
+        matched_objects = self.match_lidar_yolo()         
+        print(matched_objects)                
+        unknown_arcs = self.process_unmatched_lidar(matched_objects)    
+        print    
+
+    # Handle matched objects
+    for arc, box in matched_objects:
+        # Implement logic to update object locations based on arc and box
+        print(f"Matched arc: {arc} with box: {box}")
+
+    # Handle unknown objects
+    for arc in unknown_arcs:
+        # Implement logic to handle unknown arcs
+        print(f"Unknown arc: {arc}")
+
+
         # CURRENT PLAN:
         # sync with detections and laser arcs
-        detectionarcs = self.detectionarcs
-        laserarcs = self.laserarcs
-        laserobjs = self.laserobjs
+        # detectionarcs = self.detectionarcs
+        # laserarcs = self.laserarcs
+        # laserobjs = self.laserobjs
         # 
         # using previously compiled list as prior,
         # attempt to update the locations of each object
