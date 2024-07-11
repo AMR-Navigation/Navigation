@@ -54,8 +54,8 @@ class Fusion:
         for obj in data.objects:
             angles, coords = getarc(obj,self.yaw,self.x,self.y)
             self.laserarcs.append((angles, coords))
-            # print("Coordinates: ", coords)
-            # print("Laser Angles: ", angles)
+            print("Coordinates: ", coords)
+            print("Laser Angles: ", angles)
         #print rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs), '|', self.frame
         #print ("Laserarcs: ", self.laserarcs)
 
@@ -70,9 +70,9 @@ class Fusion:
         # height = detection.height
 
         # center_x, center_y = box_center(x, y, width, height)
-        self.detectionarcs.append(calc_angle(center_x, center_y))       #This array holds the horizontal and vertical angles for the center of the bouding box
+        self.detectionarcs.append(calc_angle(self.yaw, center_x, center_y))       #This array holds the horizontal and vertical angles for the center of the bouding box
 
-        #print("Bouding Box angle: ", self.detectionarcs)
+        print("Bouding Box angle: ", self.detectionarcs)
         
 
 
@@ -103,16 +103,16 @@ class Fusion:
         for angles, coords in self.laserarcs:
             min_angle, max_angle = angles
             for angle_x, angle_y in self.detectionarcs:
-                print("Testing Coordinate: ", coords)
-                print ("Min: ", min_angle)
-                print ("Min: ", max_angle)
-                print("Angle_x", angle_x)
+                # print("Testing Coordinate: ", coords)
+                # print ("Min: ", min_angle)
+                # print ("Max: ", max_angle)
+                # print("Angle_x", angle_x)
                 #Check if YOLO detection angle is within Lidar arc
                 if min_angle <= angle_x <= max_angle:
                     matched_objects.append(coords)     
                     break       #Once matched, break the inner loop
 
-        print("Hello: ", matched_objects)
+        print("Matched Objects: ", matched_objects)
         return matched_objects
     
     
