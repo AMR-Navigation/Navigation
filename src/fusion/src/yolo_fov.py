@@ -25,13 +25,13 @@ principal_point_y = image_width / 2
 #     return x, y
 
 #This function calculates the angle for the center of the bouding box relative to the camera's optical axis.
-def calc_angle(center_x, center_y):
+def calc_angle(yaw, center_x, center_y):
 
     global principal_point_x, principal_point_y, focal_length_x, focal_length_y
     
     angle_x = math.atan2((center_x - principal_point_x), focal_length_x) 			# horizontal angle relative to optical azis
     angle_y = math.atan2((center_y - principal_point_y), focal_length_y)            #vertical angle relative to optical axis
-    return angle_x, angle_y
+    return (yaw+angle_x), angle_y
 
 
 
