@@ -6,7 +6,7 @@ from random import *
 import os
 
 RESOLUTION = .05
-ORIGIN = (-7,-10)
+ORIGIN = (-10/RESOLUTION,-10/RESOLUTION)
 
 
 
@@ -25,15 +25,17 @@ class Map():
 
 	def setupgui(self):
 		self.frame = Tk()
-		self.canvas = Canvas(self.frame, width=500, height=500,bg="white")
+		self.canvas = Canvas(self.frame, width=600, height=600,bg="white")
 		self.canvas.pack()
 
 	def getmetadata(self):
-		b = self.mapfile.read(50)
-		b = b.decode('utf-8').split('\n')
-		self.width = int(b[2].split(' ')[0])
-		self.height = int(b[2].split(' ')[1])
-		self.gradient = int(b[3])
+		j = self.mapfile.read(3)
+		while j!=b"\n": j=self.mapfile.read(1)
+		self.width = int(self.mapfile.read(3).decode('utf-8'))
+		self.mapfile.read(1)
+		self.height = int(self.mapfile.read(3).decode('utf-8'))
+		self.mapfile.read(1)
+		self.gradient = int(self.mapfile.read(3).decode('utf-8'))
 		# TODO: Get resolution from yaml file
 
 	def setbegin(self):
@@ -61,6 +63,8 @@ class Map():
 
 			if self.map[curr[0]][curr[1]]==0:
 				return distances[curr]									# if cell is occupied, return
+			if distances[curr]>15:
+				return 15
 
 			directions = [(-1, -1), (0, -1), (1, -1),   # Up-left, Left, Down-left
               (1, 0),  (1, 1),  (0, 1),    # Down, Down-right, Right
@@ -96,6 +100,8 @@ class Map():
 		self.canvas.create_rectangle((self.goodtogui(0,0)),(self.goodtogui(0,0)),fill="blue",width = 3)
 
 	def displaypose(self,x,y):
+		print x,y
+		print self.goodtogui(x,y)
 		self.canvas.delete("pose")
 		self.canvas.create_rectangle(
 			(self.goodtogui(x,y)),
@@ -135,7 +141,7 @@ class Map():
 
 
 	def goodtogui(self,x,y):
-		return x/RESOLUTION+float(self.width)/2 + ORIGIN[0], -1*y/RESOLUTION+float(self.height)/2 + ORIGIN[1]
+		return (x)/RESOLUTION - 2*ORIGIN[0]+5, -1*(y)/RESOLUTION - 2*ORIGIN[1]+5 # I no longer have any idea why this is the calculation
 
 	def goodtomatrix(self,x,y):						# note that this will round to the nearest node
-		return int(round(x/RESOLUTION+float(self.width)/2 + ORIGIN[0])), int(round(-1*y/RESOLUTION+float(self.height)/2 + ORIGIN[1]))
+		return int(round((x)/RESOLUTION - 2*ORIGIN[0]+5)), int(round(-1*(y)/RESOLUTION - 2*ORIGIN[1]+5))
