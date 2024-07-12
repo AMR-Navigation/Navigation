@@ -100,8 +100,6 @@ class Map():
 		self.canvas.create_rectangle((self.goodtogui(0,0)),(self.goodtogui(0,0)),fill="blue",width = 3)
 
 	def displaypose(self,x,y):
-		print x,y
-		print self.goodtogui(x,y)
 		self.canvas.delete("pose")
 		self.canvas.create_rectangle(
 			(self.goodtogui(x,y)),
