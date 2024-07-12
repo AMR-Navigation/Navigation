@@ -57,6 +57,24 @@ class ObjectDetectorNode:
 				detection_msg.width = pred.get('width', 0.0)
 				detection_msg.height = pred.get('height', 0.0)
 
+				# Convert center coordinates to top-left coordinates
+				x_center = pred.get('x', 0.0)
+				y_center = pred.get('y', 0.0)
+				width = pred.get('width', 0.0)
+				height = pred.get('height', 0.0)
+				x1 = x_center - (width / 2)
+				y1 = y_center - (height / 2)
+				x2 = x_center + (width / 2)
+				y2 = y_center + (height / 2)
+
+				# Draw bounding box on the image
+				cv2.rectangle(cv_image, 
+                              (int(x1), int(y1)), 
+                              (int(x2), int(y2)), 
+                              (0, 255, 0), 2)
+				cv2.putText(cv_image, "{}: {:.2f}".format(pred['class'], pred['confidence']),
+                            (int(x1), int(y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
 				# Log the detection result
 				rospy.loginfo("Class: {}, Confidence: {}, X: {}, Y: {}, Width: {}, Height: {}".format(
 					detection_msg.classification, detection_msg.confidence, detection_msg.x, detection_msg.y,
@@ -69,6 +87,10 @@ class ObjectDetectorNode:
 				# Publish the detection result
 				self.result_pub.publish(detection_msg)
 
+				# Display the image with bounding boxes
+				cv2.imshow('Object Detection', cv_image)
+				cv2.waitKey(1)
+
 		else:
 			rospy.logwarn("Failed to get valid detection result.")
 
@@ -78,3 +100,4 @@ if __name__ == '__main__':
 		rospy.spin()
 	except rospy.ROSInterruptException:
 		pass
+	cv2.destroyAllWindows()
