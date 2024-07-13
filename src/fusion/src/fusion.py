@@ -108,7 +108,7 @@ class Fusion:
                 # print ("Max: ", max_angle)
                 # print("Angle_x", angle_x)
                 #Check if YOLO detection angle is within Lidar arc
-                if min_angle <= angle_x <= max_angle:
+                if min_angle -0.30 <= angle_x <= max_angle + 0.30:
                     matched_objects.append(coords)     
                     break       #Once matched, break the inner loop
 
