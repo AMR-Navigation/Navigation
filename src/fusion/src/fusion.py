@@ -5,6 +5,7 @@ from messages.msg import *
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import tf.transformations
 import message_filters
+import numpy as np
 
 from time import * 
 from math import *
@@ -15,12 +16,13 @@ from yolo_fov import *
 
 
 class Fusion:
-    #This function initilazes the ROS Node and sets up the LidarList, ObjectDetection subscribers. It aslo uses message filter to synch the lidar and YOLO detection messages with sync_callback
-    def __init__(self):
+    # This function initializes the ROS Node and sets up the LidarList, ObjectDetection subscribers.
+    # It also uses message filter to sync the lidar and YOLO detection messages with sync_callback.
+    def __init__(self, threshold=0.1):
         rospy.init_node("fusion", anonymous=False)
-        self.laser_sub = message_filters.Subscriber("LidarList", UWOList)        #Laser subscriber
-        self.detection_sub = message_filters.Subscriber("object_detection_results", detection)        #Detection subscriber
-        self.pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)    #Pose subscriber
+        self.laser_sub = message_filters.Subscriber("LidarList", UWOList)  # Laser subscriber
+        self.detection_sub = message_filters.Subscriber("object_detection_results", detection)  # Detection subscriber
+        self.pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)  # Pose subscriber
         
         # Time synchronizer
         self.ts = message_filters.ApproximateTimeSynchronizer([self.laser_sub, self.detection_sub], queue_size=10, slop=0.1)
@@ -37,49 +39,40 @@ class Fusion:
         self.laserarcs = []
         self.detectionarcs = []
 
-        
-	#This function is called when the synced messages are received from the subscribers. It calls updateLaser and updatedetections to proccess the data
+        # Initialize the threshold for distance comparison
+        self.threshold = threshold
+
+    # This function is called when the synced messages are received from the subscribers.
+    # It calls updateLaser and updateDetections to process the data.
     def sync_callback(self, lidar_data, detection_data):
         self.updatelaser(lidar_data)
         self.updatedetections(detection_data)
         self.fuse()
 
     # Arc: (min, max) using the ROS rotation system, e.g. relative to vertical axis, counter-clockwise, and like
-    #             0
+    #              0
     #        .5pi    -.5pi
-    #            1
-    def updatelaser(self,data):
+    #              1
+    def updatelaser(self, data):
         print("Got new laser data:")
         self.laserarcs = []
         for obj in data.objects:
-            angles, coords = getarc(obj,self.yaw,self.x,self.y)
+            angles, coords = getarc(obj, self.yaw, self.x, self.y)
             self.laserarcs.append((angles, coords))
             print("Coordinates: ", coords)
             print("Laser Angles: ", angles)
-        #print rospy.Time(data.header.stamp.secs,data.header.stamp.nsecs), '|', self.frame
-        #print ("Laserarcs: ", self.laserarcs)
 
     # Arc: (fov, direction)
-    def updatedetections(self,detection):
-        pass
+    def updatedetections(self, detection):
         print("Got new YOLO data")
+        center_x = detection.x  # x-coordinate for center of the bounding box
+        center_y = detection.y  # y-coordinate for center of the bounding box
+        self.detectionarcs.append(calc_angle(self.yaw, center_x, center_y))  # This array holds the horizontal and vertical angles for the center of the bounding box
+        print("Bounding Box angle: ", self.detectionarcs)
 
-        center_x = detection.x          #x-coordinate for center of the bounding box
-        center_y = detection.y          #y-coordinate for center of the bounding box
-        # width = detection.width
-        # height = detection.height
-
-        # center_x, center_y = box_center(x, y, width, height)
-        self.detectionarcs.append(calc_angle(self.yaw, center_x, center_y))       #This array holds the horizontal and vertical angles for the center of the bouding box
-
-        print("Bouding Box angle: ", self.detectionarcs)
-        
-
-
-	#This function updates the robots current pose based on the amcl_pose topic.
-    def updatepose(self,data):
+    # This function updates the robot's current pose based on the amcl_pose topic.
+    def updatepose(self, data):
         print("Got new pose data")
-        # Set class variables to use in other callbacks
         self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,
                                                              data.pose.pose.orientation.y,
                                                              data.pose.pose.orientation.z,
@@ -87,84 +80,47 @@ class Fusion:
         self.x = data.pose.pose.position.x
         self.y = data.pose.pose.position.y
 
-    # def match_lidar_yolo(self):
-    #     matched_objects = []
-    #     for angles, coords in self.laserarcs:
-    #         min_angle, max_angle = angles
-    #         for angle_x, angle_y in self.detectionarcs:
-    #             #Check if YOLO detection angle is within Lidar arc
-    #             if min_angle <= angle_x <= max_angle:
-    #                 matched_objects.append(coords)     
-    #                 break       #Once matched, break the inner loop
-    #     return matched_objects
-
     def match_lidar_yolo(self):
         matched_objects = []
         for angles, coords in self.laserarcs:
             min_angle, max_angle = angles
             for angle_x, angle_y in self.detectionarcs:
-                # print("Testing Coordinate: ", coords)
-                # print ("Min: ", min_angle)
-                # print ("Max: ", max_angle)
-                # print("Angle_x", angle_x)
-                #Check if YOLO detection angle is within Lidar arc
-                if min_angle -0.30 <= angle_x <= max_angle + 0.30:
-                    matched_objects.append(coords)     
-                    break       #Once matched, break the inner loop
+                # Check if YOLO detection angle is within Lidar arc with a standard deviation of +-0.30 radians
+                if min_angle - 0.30 <= angle_x <= max_angle + 0.30:
+                    matched_objects.append(coords)
+                    break  # Once matched, break the inner loop
 
         print("Matched Objects: ", matched_objects)
         return matched_objects
-    
-    
+
     def process_unmatched_lidar(self, matched_objects):
-        matched_coords = [match for match in matched_objects] #Extracting matched coordinate points
-        unknown_coords = [coords for _, coords in self.laserarcs if coords not in matched_coords] #Instead of storing the arc of the lidar, I want to store the corresponding coordinate points(x and y) given to me by UWO list messages where it is stored as "mean"
-        return unknown_coords
-    
+        # Extracting matched coordinate points
+        matched_coords = [match for match in matched_objects]
+        # Filter out the matched coordinates from laserarc
+        unknown_coords = [coords for _, coords in self.laserarcs if coords not in matched_coords]
+        
+        # Remove coordinates where both x and y have to be at most 0.6 away from any other coordinate
+        filtered_unmatched_coords = []
+        for coord in unknown_coords:
+            if not any(self.is_close(coord, existing, threshold=0.6) for existing in filtered_unmatched_coords):
+                filtered_unmatched_coords.append(coord)
+            else:
+                print("Filtered out coord", coord, "as it's close to an existing coord in filtered list")
+
+        
+        return filtered_unmatched_coords
+
+    def is_close(self, coord1, coord2, threshold):
+        print("Checking if ", coord1, " is close to ", coord2)
+        return abs(coord1[0] - coord2[0]) < threshold and abs(coord1[1] - coord2[1]) < threshold
 
     def fuse(self):
         matched_objects = self.match_lidar_yolo()         
-        print("Matched Objects",matched_objects)                
-        unknown_arcs = self.process_unmatched_lidar(matched_objects)    
-        print("Unmatched Objects", unknown_arcs)    
-
-    # # Handle matched objects
-    # for arc, box in matched_objects:
-    #     # Implement logic to update object locations based on arc and box
-    #     print(f"Matched arc: {arc} with box: {box}")
-
-    # # Handle unknown objects
-    # for arc in unknown_arcs:
-    #     # Implement logic to handle unknown arcs
-    #     print(f"Unknown arc: {arc}")
-
-
-        # CURRENT PLAN:
-        # sync with detections and laser arcs
-        # detectionarcs = self.detectionarcs
-        # laserarcs = self.laserarcs
-        # laserobjs = self.laserobjs
-        # 
-        # using previously compiled list as prior,
-        # attempt to update the locations of each object
-        #for i in range(len(self.record)):
-            #for arc in laserarcs:
-
-        # 
-        # then take all remaining data and,
-        # for every arc in laser arcs:
-        #         attempt to identify it, if impossible then mark as unknown
-
+        print("Matched Objects", matched_objects)                
+        unmatched_objects = self.process_unmatched_lidar(matched_objects)    
+        print("Unmatched Objects", unmatched_objects)    
 
 if __name__ == "__main__":
-    F = Fusion()
+    F = Fusion(threshold=0.1)
     print("Initialized.")
     rospy.spin()
-
-
-# #Processes the YOLO detection data and apends the calculated angles to detectionarcs
-    # def updatedetections2(self,detection):
-    #     print("Got new YOLO data")
-    #     print(detection.classification, self.yaw/pi, getarcfrombox(detection.x,detection.width, self.yaw)[0]/pi, getarcfrombox(detection.x,detection.width, self.yaw)[1]/pi)
-    #     self.detections.append(detection)
-    #     self.detectionarcs.append(getarcfrombox(detection.x,detection.width, self.yaw))
