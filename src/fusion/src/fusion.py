@@ -2,7 +2,7 @@
 
 import rospy
 from messages.msg import *
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import Point, PoseWithCovarianceStamped
 import tf.transformations
 import message_filters
 import numpy as np
@@ -23,6 +23,8 @@ class Fusion:
         self.laser_sub = message_filters.Subscriber("LidarList", UWOList)  # Laser subscriber
         self.detection_sub = message_filters.Subscriber("object_detection_results", detection)  # Detection subscriber
         self.pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)  # Pose subscriber
+
+        self.pub = rospy.Publisher("coordinates_topic", coordinates, queue_size=10)
         
         # Time synchronizer
         self.ts = message_filters.ApproximateTimeSynchronizer([self.laser_sub, self.detection_sub], queue_size=10, slop=0.1)
@@ -54,25 +56,25 @@ class Fusion:
     #        .5pi    -.5pi
     #              1
     def updatelaser(self, data):
-        print("Got new laser data:")
+        # print("Got new laser data:")
         self.laserarcs = []
         for obj in data.objects:
             angles, coords = getarc(obj, self.yaw, self.x, self.y)
             self.laserarcs.append((angles, coords))
-            print("Coordinates: ", coords)
-            print("Laser Angles: ", angles)
+            # print("Coordinates: ", coords)
+            # print("Laser Angles: ", angles)
 
     # Arc: (fov, direction)
     def updatedetections(self, detection):
-        print("Got new YOLO data")
+        # print("Got new YOLO data")
         center_x = detection.x  # x-coordinate for center of the bounding box
         center_y = detection.y  # y-coordinate for center of the bounding box
         self.detectionarcs.append(calc_angle(self.yaw, center_x, center_y))  # This array holds the horizontal and vertical angles for the center of the bounding box
-        print("Bounding Box angle: ", self.detectionarcs)
+        # print("Bounding Box angle: ", self.detectionarcs)
 
     # This function updates the robot's current pose based on the amcl_pose topic.
     def updatepose(self, data):
-        print("Got new pose data")
+        # print("Got new pose data")
         self.yaw = tf.transformations.euler_from_quaternion([data.pose.pose.orientation.x,
                                                              data.pose.pose.orientation.y,
                                                              data.pose.pose.orientation.z,
@@ -90,7 +92,7 @@ class Fusion:
                     matched_objects.append(coords)
                     break  # Once matched, break the inner loop
 
-        print("Matched Objects: ", matched_objects)
+        # print("Matched Objects: ", matched_objects)
         return matched_objects
 
     def process_unmatched_lidar(self, matched_objects):
@@ -111,14 +113,20 @@ class Fusion:
         return filtered_unmatched_coords
 
     def is_close(self, coord1, coord2, threshold):
-        print("Checking if ", coord1, " is close to ", coord2)
+        # print("Checking if ", coord1, " is close to ", coord2)
         return abs(coord1[0] - coord2[0]) < threshold and abs(coord1[1] - coord2[1]) < threshold
 
     def fuse(self):
         matched_objects = self.match_lidar_yolo()         
         print("Matched Objects", matched_objects)                
         unmatched_objects = self.process_unmatched_lidar(matched_objects)    
-        print("Unmatched Objects", unmatched_objects)    
+        print("Unmatched Objects", unmatched_objects)   
+
+        result = coordinates()
+        result.matched_objects = [Point(x=coord[0], y=coord[1], z=0) for coord in matched_objects]
+        result.unmatched_objects = [Point(x=coord[0], y=coord[1], z=0) for coord in unmatched_objects]
+        self.pub.publish(result)
+
 
 if __name__ == "__main__":
     F = Fusion(threshold=0.1)
