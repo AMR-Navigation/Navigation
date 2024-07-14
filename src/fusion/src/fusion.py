@@ -117,7 +117,7 @@ class Fusion:
     
     
     def process_unmatched_lidar(self, matched_objects):
-        matched_coords = [match[1] for match in matched_objects] #Extracting matched coordinate points
+        matched_coords = [match for match in matched_objects] #Extracting matched coordinate points
         unknown_coords = [coords for _, coords in self.laserarcs if coords not in matched_coords] #Instead of storing the arc of the lidar, I want to store the corresponding coordinate points(x and y) given to me by UWO list messages where it is stored as "mean"
         return unknown_coords
     
