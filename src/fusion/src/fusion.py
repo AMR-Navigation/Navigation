@@ -56,21 +56,21 @@ class Fusion:
     #        .5pi    -.5pi
     #              1
     def updatelaser(self, data):
-        # print("Got new laser data:")
+        print("Got new laser data:")
         self.laserarcs = []
         for obj in data.objects:
             angles, coords = getarc(obj, self.yaw, self.x, self.y)
             self.laserarcs.append((angles, coords))
-            # print("Coordinates: ", coords)
-            # print("Laser Angles: ", angles)
+            print("Coordinates: ", coords)
+            print("Laser Angles: ", angles)
 
     # Arc: (fov, direction)
     def updatedetections(self, detection):
-        # print("Got new YOLO data")
+        print("Got new YOLO data")
         center_x = detection.x  # x-coordinate for center of the bounding box
         center_y = detection.y  # y-coordinate for center of the bounding box
         self.detectionarcs.append(calc_angle(self.yaw, center_x, center_y))  # This array holds the horizontal and vertical angles for the center of the bounding box
-        # print("Bounding Box angle: ", self.detectionarcs)
+        print("Bounding Box angle: ", self.detectionarcs)
 
     # This function updates the robot's current pose based on the amcl_pose topic.
     def updatepose(self, data):
@@ -104,7 +104,7 @@ class Fusion:
         # Remove coordinates where both x and y have to be at most 0.6 away from any other coordinate
         filtered_unmatched_coords = []
         for coord in unknown_coords:
-            if not any(self.is_close(coord, existing, threshold=0.6) for existing in filtered_unmatched_coords):
+            if not any(self.is_close(coord, existing, threshold=0.3) for existing in filtered_unmatched_coords):
                 filtered_unmatched_coords.append(coord)
             else:
                 print("Filtered out coord", coord, "as it's close to an existing coord in filtered list")
