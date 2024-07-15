@@ -18,7 +18,7 @@ import numpy
 from sklearn.cluster import DBSCAN
 
 SENSITIVITY = 13 																					# the distance from occupied map nodes for a data point to be considered novel
-MINPOINTSFORCLUSTER = 5																				# minimum number of points for a cluster to be published
+MINPOINTSFORCLUSTER = 2																				# minimum number of points for a cluster to be published
 
 def getyaw(q):																						# gets yaw from quaternion
 	x, y, z, w = q.x, q.y, q.z, q.w
