@@ -24,7 +24,7 @@ class Fusion:
         self.detection_sub = message_filters.Subscriber("object_detection_results", detection)  # Detection subscriber
         self.pose_sub = rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.updatepose)  # Pose subscriber
 
-        self.pub = rospy.Publisher("coordinates_topic", coordinates, queue_size=10)
+        self.pub = rospy.Publisher("coordinates_topic", objectsList, queue_size=10)
         
         # Time synchronizer
         self.ts = message_filters.ApproximateTimeSynchronizer([self.laser_sub, self.detection_sub], queue_size=10, slop=0.1)
@@ -69,7 +69,9 @@ class Fusion:
         print("Got new YOLO data")
         center_x = detection.x  # x-coordinate for center of the bounding box
         center_y = detection.y  # y-coordinate for center of the bounding box
-        self.detectionarcs.append(calc_angle(self.yaw, center_x, center_y))  # This array holds the horizontal and vertical angles for the center of the bounding box
+        classification = detection.classification
+        angle_x, angle_y = calc_angle(self.yaw, center_x, center_y)
+        self.detectionarcs.append((classification, angle_x, angle_y))  # This array holds the horizontal and vertical angles for the center of the bounding box
         print("Bounding Box angle: ", self.detectionarcs)
 
     # This function updates the robot's current pose based on the amcl_pose topic.
@@ -86,19 +88,20 @@ class Fusion:
         matched_objects = []
         for angles, coords in self.laserarcs:
             min_angle, max_angle = angles
-            for angle_x, angle_y in self.detectionarcs:
+            for classification, angle_x, angle_y in self.detectionarcs:
                 # Check if YOLO detection angle is within Lidar arc with a standard deviation of +-0.30 radians
                 if min_angle - 0.30 <= angle_x <= max_angle + 0.30:
-                    matched_objects.append(coords)
+                    matched_objects.append((classification, coords))
                     break  # Once matched, break the inner loop
 
-        # print("Matched Objects: ", matched_objects)
+        print("Printing Matched Objects: ", matched_objects)
         return matched_objects
 
     def process_unmatched_lidar(self, matched_objects):
         # Extracting matched coordinate points
-        matched_coords = [match for match in matched_objects]
-        # Filter out the matched coordinates from laserarc
+        matched_coords = [match[1] for match in matched_objects]
+        print(matched_coords)
+        # # Filter out the matched coordinates from laserarc
         unknown_coords = [coords for _, coords in self.laserarcs if coords not in matched_coords]
         
         # Remove coordinates where both x and y have to be at most 0.6 away from any other coordinate
@@ -122,10 +125,44 @@ class Fusion:
         unmatched_objects = self.process_unmatched_lidar(matched_objects)    
         print("Unmatched Objects", unmatched_objects)   
 
-        result = coordinates()
-        result.matched_objects = [Point(x=coord[0], y=coord[1], z=0) for coord in matched_objects]
-        result.unmatched_objects = [Point(x=coord[0], y=coord[1], z=0) for coord in unmatched_objects]
-        self.pub.publish(result)
+        msg = objectsList()
+        msg.matched_objects = []
+        msg.unmatched_objects = []
+
+        for classification, coord in matched_objects:
+            coord_x, coord_y = coord
+            obj = objects()
+            obj.classification = classification
+            obj.x = coord_x
+            obj.y = coord_y
+            # obj.coordinates = [Point(x=coord_x, y=coord_y, z=0)]
+            # obj.x = coord[0]
+            # obj.y = coord[1]
+
+            msg.matched_objects.append(obj)
+        
+        for coord in unmatched_objects:
+            coord_x, coord_y = coord
+            obj = objects()
+            obj.classification = 'unknown'
+            obj.x = coord_x
+            obj.y = coord_y
+            # obj.coordinates = [Point(x=coord_x, y=coord_y, z=0)]
+            msg.unmatched_objects.append(obj)
+        # msg.unmatched_objects = [Point(x=coord[0], y=coord[1], z=0) for coord in unmatched_objects]
+        # for classification, coord in unmatched_objects:
+        #     obj = objects()
+        #     obj.classification = "unknown"
+        #     obj.coordinates = [Point(x=coord[0], y=coord[1], z=0)]
+        #     # obj.x = coord[0]
+        #     # obj.y = coord[1]
+        #     msg.unmatched_objects.append(obj)
+
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "objectsList"
+
+        self.pub.publish(msg)
+        rospy.loginfo("Published matched and unmatched objects to coordinate_topic")
 
 
 if __name__ == "__main__":
