@@ -1,0 +1,5 @@
+<library path="lib/libpathing">
+  <class type="simple_layer_namespace::DynamicLayer" base_class_type="costmap_2d::Layer">
+    <description>Our layer!!!</description>
+  </class>
+</library>
