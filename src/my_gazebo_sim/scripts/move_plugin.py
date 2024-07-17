@@ -10,8 +10,8 @@ class MovePersonPlugin:
     def __init__(self):
         rospy.init_node('move_person_plugin')
         self.model_name = 'person_standing'
-        self.max_distance = 5.0  # meters
-        self.speed = 0.5  # m/s
+        self.max_distance = 1.0  # meters
+        self.speed = 0.1  # m/s
         self.direction = 1
         self.rate = rospy.Rate(10)  # 10 Hz
 
