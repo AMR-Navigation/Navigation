@@ -3,7 +3,7 @@
   <include file="$(find gazebo_ros)/launch/empty_world.launch"/> -->
 
   <!-- Spawn the model in the Gazebo world -->
-  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-file $(find my_gazebo_sim)/models/person_standing/model.sdf -sdf -model person_standing" />
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-file $(find my_gazebo_sim)/models/person_standing/model.sdf -sdf -model person_standing -x -3 -y -5 -z 0" />
 
   <!-- Run the Python plugin to move the model -->
   <node name="move_plugin" pkg="my_gazebo_sim" type="move_plugin.py" output="screen"/>
