@@ -41,6 +41,9 @@ def getmeanpoint(points):																			# argument must be a list of the mes
 	p.y /= len(points)
 	return p
 
+def getdistance(p1,p2):
+	return sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
+
 class Controller:
 	def __init__(self):
 		rospy.init_node("controller",anonymous=True)
@@ -54,6 +57,7 @@ class Controller:
 		self.points=[]
 		self.novelpoints=[]
 		self.cluster = []
+		self.prevmeans = []																	# look up by cluster
 		self.pose = PoseWithCovarianceStamped().pose.pose
 		self.x = self.y = self.i = 0
 		
@@ -125,25 +129,38 @@ class Controller:
 		res = DBSCAN(eps=.12,min_samples=3).fit(formatted)																	# epsilon is max distance for points to be neighbors, min_sampes is the number of samples for core points
 		self.cluster = list(res.labels_)
 
+	def getdirection(self, mean, prevs):
+		if len(prevs)==0: return 4
+		closest=0
+		for p in range(len(prevs)):
+			if getdistance(prevs[p],mean) < getdistance(prevs[closest],mean): closest = p
+		return atan2(mean.x-prevs[closest].x,mean.y-prevs[closest].y)
+		
+
+
 	def publishclusters(self):
 		# Create the list of clusters
 		uwolist = UWOList()
-		clust = deepcopy(self.cluster)																						# avoid threading issues
 		novels = deepcopy(self.novelpoints)
 		for i in range(len(novels)):
-			if clust[i]==-1: continue																				# point is noise, skip it
-			while clust[i]>len(uwolist.objects)-1: uwolist.objects.append(UWO())										# add a new UWO
+			if self.cluster[i]==-1: continue																				# point is noise, skip it
+			while self.cluster[i]>len(uwolist.objects)-1: uwolist.objects.append(UWO())										# add a new UWO
 			npoint = point()																								# create the point
 			npoint.x = novels[i][0]
 			npoint.y = novels[i][1]
-			uwolist.objects[clust[i]].points.append(npoint)															# properly add the point
+			uwolist.objects[self.cluster[i]].points.append(npoint)															# properly add the point
 
-		# Filter the list and set the means
+		# Filter the list and set the means, directions
 		toremove = []
 		for uwo in uwolist.objects:
 			if len(uwo.points)<MINPOINTSFORCLUSTER: toremove.append(uwo)
-			else: uwo.mean = getmeanpoint(uwo.points)
+			else: 
+				uwo.mean = getmeanpoint(uwo.points)
+				uwo.direction = self.getdirection(uwo.mean, self.prevmeans)
+
+		self.prevmeans = []
 		for uwo in toremove: uwolist.objects.remove(uwo)
+		for uwo in uwolist.objects: self.prevmeans.append(uwo.mean)
 
 		# Stamp it
 		uwolist.header.stamp = rospy.Time.now()

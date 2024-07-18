@@ -37,6 +37,8 @@ class Fusion:
         self.x = 0
         self.y = 0
 
+        self.directions = []                    # look up by arc index
+
         # Laser and detection variables
         self.laserarcs = []
         self.detectionarcs = []
@@ -58,9 +60,11 @@ class Fusion:
     def updatelaser(self, data):
         print("Got new laser data:")
         self.laserarcs = []
+        self.directions = []
         for obj in data.objects:
             angles, coords = getarc(obj, self.yaw, self.x, self.y)
             self.laserarcs.append((angles, coords))
+            self.directions.append(obj.direction)
             print("Coordinates: ", coords)
             print("Laser Angles: ", angles)
 
@@ -86,13 +90,15 @@ class Fusion:
 
     def match_lidar_yolo(self):
         matched_objects = []
+        i=0
         for angles, coords in self.laserarcs:
             min_angle, max_angle = angles
             for classification, angle_x, angle_y in self.detectionarcs:
                 # Check if YOLO detection angle is within Lidar arc with a standard deviation of +-0.30 radians
                 if min_angle - 0.30 <= angle_x <= max_angle + 0.30:
-                    matched_objects.append((classification, coords))
+                    matched_objects.append((classification, coords, self.directions[i]))
                     break  # Once matched, break the inner loop
+            i+=1
 
         print("Printing Matched Objects: ", matched_objects)
         return matched_objects
@@ -103,14 +109,19 @@ class Fusion:
         print(matched_coords)
         # # Filter out the matched coordinates from laserarc
         unknown_coords = [coords for _, coords in self.laserarcs if coords not in matched_coords]
+        unknowndirs = [self.directions[i] for i in range(len(self.laserarcs)) if self.laserarcs[i][1] not in matched_coords]    # LMAO
         
         # Remove coordinates where both x and y have to be at most 0.6 away from any other coordinate
         filtered_unmatched_coords = []
+        self.tempstorageforunmatcheddirections = []
+        i=0
         for coord in unknown_coords:
             if not any(self.is_close(coord, existing, threshold=0.3) for existing in filtered_unmatched_coords):
                 filtered_unmatched_coords.append(coord)
+                self.tempstorageforunmatcheddirections.append(unknowndirs[i])
             else:
                 print("Filtered out coord", coord, "as it's close to an existing coord in filtered list")
+            i+=1
 
         
         return filtered_unmatched_coords
@@ -129,26 +140,30 @@ class Fusion:
         msg.matched_objects = []
         msg.unmatched_objects = []
 
-        for classification, coord in matched_objects:
+        for classification, coord, direction in matched_objects:
             coord_x, coord_y = coord
             obj = objects()
             obj.classification = classification
             obj.x = coord_x
             obj.y = coord_y
+            obj.direction = direction
             # obj.coordinates = [Point(x=coord_x, y=coord_y, z=0)]
             # obj.x = coord[0]
             # obj.y = coord[1]
 
             msg.matched_objects.append(obj)
         
+        i=0
         for coord in unmatched_objects:
             coord_x, coord_y = coord
             obj = objects()
             obj.classification = 'unknown'
             obj.x = coord_x
             obj.y = coord_y
+            obj.direction = self.tempstorageforunmatcheddirections[i]
             # obj.coordinates = [Point(x=coord_x, y=coord_y, z=0)]
             msg.unmatched_objects.append(obj)
+            i+=1
         # msg.unmatched_objects = [Point(x=coord[0], y=coord[1], z=0) for coord in unmatched_objects]
         # for classification, coord in unmatched_objects:
         #     obj = objects()

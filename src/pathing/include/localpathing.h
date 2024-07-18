@@ -8,7 +8,10 @@
 #include "messages/objectsList.h"
 
 
+
 #include <vector>
+#include <string>
+#include <cmath>
 
 
 
@@ -21,7 +24,15 @@ struct coord
 	float y;
 };
 
+struct object
+{
+	coord location;
+	std::string classification;
+	float direction;
+};
+
 typedef std::vector<coord> COORDLIST;
+typedef std::vector<object> OBJLIST;
 
 class DynamicLocalLayer : public costmap_2d::Layer, public costmap_2d::Costmap2D
 {
@@ -39,9 +50,12 @@ public:
   virtual void matchSize();
 
   void callback(const messages::objectsList::ConstPtr& msg);
-  void setCircleCost(int center_x, int center_y, int radius);
+  void setcostfor(object o, double robot_x, double robot_y);
+  void setCircleCost(unsigned int center_x, unsigned int center_y, int radius, float ratefactor);
+  bool isInEgg(int x, int y, int major, int minor, float direction);
+  void setEggCost(int center_x, int center_y, float direction);
   ros::Subscriber sub;
-  COORDLIST idobjs; // change later
+  OBJLIST idobjs; // change later
   
 
 private:

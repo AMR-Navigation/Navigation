@@ -12,6 +12,15 @@ using costmap_2d::FREE_SPACE;
 int LOCALDIM = 60;
 float RES = .05;
 
+// Macros
+#define PEOPLERADIUS 30
+#define CLASS_CHAIR "Chair"
+#define CLASS_PEOPLE "People"
+#define CLASS_ROBOT "Robot"
+#define CLASS_SOFA "Sofa"
+#define CLASS_TABLE "Table"
+#define CLASS_UNKNOWN "Unknown"
+
 namespace simple_local_layer_namespace
 {
 
@@ -33,10 +42,8 @@ bool worldtolocal(unsigned int &rx, unsigned int &ry, float x, float y, float ro
 	coord loc;
 	loc.x = (x-robotx)/RES + LOCALDIM/2;
 	loc.y = (y-roboty)/RES + LOCALDIM/2;
-	if (loc.x < 0 or loc.x > LOCALDIM or loc.y <0 or loc.y > LOCALDIM) {
-		std::cout << "Bad coords " << 0 << '|' << y << ' ' << loc.x << ' ' << loc.y << std::endl;
+	if (loc.x < 0 or loc.x > LOCALDIM or loc.y <0 or loc.y > LOCALDIM) 
 		return false;
-	}
 	rx = (int)loc.x;
 	ry = (int)loc.y;
 	return true;
@@ -82,14 +89,7 @@ void DynamicLocalLayer::updateBounds(double robot_x, double robot_y, double robo
 
 	for (int i=0;i<idobjs.size();i++) 
 	{
-	coord badcoord = goodtobad(idobjs[i].x,idobjs[i].y);
-	unsigned int mx;
-	unsigned int my;
-	std::cout << i << ": Drawing obj at " << badcoord.x << ' ' << badcoord.y << ' ';
-	if(worldtolocal(mx, my, badcoord.x, badcoord.y, robot_x, robot_y)){
-			std::cout << " with map coords " << mx << ' ' << my << std::endl;
-			setCircleCost(mx, my, 20);
-		}
+		setcostfor(idobjs[i],robot_x,robot_y);
 	}
 
 	// ------------------------------------------------------------------------
@@ -120,7 +120,30 @@ void DynamicLocalLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_
 	}
 }
 
-void DynamicLocalLayer::setCircleCost(int center_x, int center_y, int radius)
+void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
+	coord badcoord = goodtobad(o.location.x, o.location.y);
+	unsigned int cx;
+	unsigned int cy;
+	if (!worldtolocal(cx,cy,badcoord.x,badcoord.y,robot_x,robot_y))
+		return;
+	
+	if (o.classification==CLASS_UNKNOWN) {
+		// Set circle with radius r and ratefactor 1
+		int r = 20;
+		setCircleCost(cx,cy,r,1.);
+	} else if (o.classification==CLASS_SOFA or o.classification==CLASS_CHAIR) {
+		int r = 10;
+		setCircleCost(cx,cy,r,4.);
+	} else if (o.classification==CLASS_PEOPLE) {
+		int r=PEOPLERADIUS;
+		setCircleCost(cx,cy,r, .5);
+	} else if (o.classification==CLASS_ROBOT) {
+		int r=20;
+		setCircleCost(cx,cy,r, .5);
+	}
+}
+
+void DynamicLocalLayer::setCircleCost(unsigned int center_x, unsigned int center_y, int radius, float ratefactor)
 {
 	//ROS_INFO("Setting circle");
 		// Iterate over the cells in the circle's bounding box
@@ -136,10 +159,37 @@ void DynamicLocalLayer::setCircleCost(int center_x, int center_y, int radius)
 						if (distance <= radius) {
 								// std::cout << "Setting " << x << ' ' << y << " to " << (int) ((1-distance/(float)radius)*((float)LETHAL_OBSTACLE)) << " while distance is " << distance << " and r is " << radius << std::endl;
 								// Set the cost value for the cell
-								setCost(x, y, (int) ((1-distance/(float)radius)*((float)LETHAL_OBSTACLE)));
+								if ((int) getCost(x,y) < (int) (std::pow(1-distance/(float)radius, ratefactor)*((float)LETHAL_OBSTACLE)) or getCost(x,y)==255) setCost(x, y, (int) (std::pow(1-distance/(float)radius, ratefactor)*((float)LETHAL_OBSTACLE)));
 						}
 				}
 		}
+}
+
+void DynamicLocalLayer::setEggCost(int center_x, int center_y, float direction)
+{
+	int major = 20;
+	int minor = 10; // also the radius
+	// Iterate over the cells in the egg's bounding box
+	for (int x = center_x - major; x <= center_x + major; x++) {
+			for (int y = center_y - minor; y <= center_y + minor; y++) {
+				if (x<0 or x>getSizeInCellsX() or y<0 or y>getSizeInCellsY()) continue;
+
+				// Calculate the distance from the center to the current cell
+				int dx = x - center_x;
+				int dy = y - center_y;
+				double distance = std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
+
+				// Check if the cell (x, y) is within the circle's radius
+				if (isInEgg(x,y,major,minor,direction)) {
+						setCost(x, y, (int) (std::pow(1-distance/(float)major, 1)*((float)LETHAL_OBSTACLE)));
+				}
+			}
+	}
+}
+
+bool DynamicLocalLayer::isInEgg(int x, int y, int major, int minor, float direction) 
+{
+	return true;
 }
 
 void DynamicLocalLayer::callback(const messages::objectsList::ConstPtr& msg)
@@ -148,17 +198,25 @@ void DynamicLocalLayer::callback(const messages::objectsList::ConstPtr& msg)
 	while (idobjs.size()>0) idobjs.pop_back();
 	for (int i=0;i<msg->matched_objects.size();i++)
 	{
+		object o;
 		coord c;
 		c.x = msg->matched_objects[i].x;
 		c.y = msg->matched_objects[i].y;
-		idobjs.push_back(c);
+		o.location = c;
+		o.classification = msg->matched_objects[i].classification;
+		o.direction = msg->matched_objects[i].direction;
+		idobjs.push_back(o);
 	}
 	for (int i=0;i<msg->unmatched_objects.size();i++)
 	{
-		coord c = coord();
+		object o;
+		coord c;
 		c.x = msg->unmatched_objects[i].x;
 		c.y = msg->unmatched_objects[i].y;
-		idobjs.push_back(c);
+		o.location = c;
+		o.classification = msg->unmatched_objects[i].classification;
+		o.direction = msg->unmatched_objects[i].direction;
+		idobjs.push_back(o);
 	}
 }
 
