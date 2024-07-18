@@ -4,7 +4,7 @@ import base64
 import numpy as np
 
 # Load a pretrained YOLOv8 model
-model = YOLO("best.pt")
+model = YOLO("yolov8.pt")
 
 # List of class names
 class_names = ["Chair", "People", "Robot", "Sofa", "Table"]
