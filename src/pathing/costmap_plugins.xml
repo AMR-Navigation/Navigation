@@ -2,4 +2,7 @@
   <class type="simple_layer_namespace::DynamicLayer" base_class_type="costmap_2d::Layer">
     <description>Our layer!!!</description>
   </class>
+  <class type="simple_local_layer_namespace::DynamicLocalLayer" base_class_type="costmap_2d::Layer">
+    <description>Our local layer!!!</description>
+  </class>
 </library>

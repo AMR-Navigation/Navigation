@@ -17,8 +17,8 @@ from copy import deepcopy
 import numpy
 from sklearn.cluster import DBSCAN
 
-SENSITIVITY = 13 																					# the distance from occupied map nodes for a data point to be considered novel
-MINPOINTSFORCLUSTER = 2																				# minimum number of points for a cluster to be published
+SENSITIVITY = 14 																					# the distance from occupied map nodes for a data point to be considered novel
+MINPOINTSFORCLUSTER = 3																				# minimum number of points for a cluster to be published
 
 def getyaw(q):																						# gets yaw from quaternion
 	x, y, z, w = q.x, q.y, q.z, q.w
@@ -128,13 +128,15 @@ class Controller:
 	def publishclusters(self):
 		# Create the list of clusters
 		uwolist = UWOList()
-		for i in range(len(self.novelpoints)):
-			if self.cluster[i]==-1: continue																				# point is noise, skip it
-			if self.cluster[i]>len(uwolist.objects)-1: uwolist.objects.append(UWO())										# add a new UWO
+		clust = deepcopy(self.cluster)																						# avoid threading issues
+		novels = deepcopy(self.novelpoints)
+		for i in range(len(novels)):
+			if clust[i]==-1: continue																				# point is noise, skip it
+			while clust[i]>len(uwolist.objects)-1: uwolist.objects.append(UWO())										# add a new UWO
 			npoint = point()																								# create the point
-			npoint.x = self.novelpoints[i][0]
-			npoint.y = self.novelpoints[i][1]
-			uwolist.objects[self.cluster[i]].points.append(npoint)															# properly add the point
+			npoint.x = novels[i][0]
+			npoint.y = novels[i][1]
+			uwolist.objects[clust[i]].points.append(npoint)															# properly add the point
 
 		# Filter the list and set the means
 		toremove = []

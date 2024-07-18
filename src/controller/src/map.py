@@ -139,7 +139,7 @@ class Map():
 
 
 	def goodtogui(self,x,y):
-		return (x)/RESOLUTION - 2*ORIGIN[0]+5, -1*(y)/RESOLUTION - 2*ORIGIN[1]+5 # I no longer have any idea why this is the calculation
+		return (x)/RESOLUTION - 2*ORIGIN[0]+5, -1*(y)/RESOLUTION - 2*ORIGIN[1]+8 # I no longer have any idea why this is the calculation
 
 	def goodtomatrix(self,x,y):						# note that this will round to the nearest node
-		return int(round((x)/RESOLUTION - 2*ORIGIN[0]+5)), int(round(-1*(y)/RESOLUTION - 2*ORIGIN[1]+5))
+		return int(round((x)/RESOLUTION - 2*ORIGIN[0]+5)), int(round(-1*(y)/RESOLUTION - 2*ORIGIN[1]+8))

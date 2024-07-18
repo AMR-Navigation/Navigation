@@ -7,12 +7,13 @@
 #include <dynamic_reconfigure/server.h>
 #include "messages/objectsList.h"
 
+
 #include <vector>
 
 
 
 
-namespace simple_layer_namespace
+namespace simple_local_layer_namespace
 {
 struct coord 
 {
@@ -22,10 +23,10 @@ struct coord
 
 typedef std::vector<coord> COORDLIST;
 
-class DynamicLayer : public costmap_2d::Layer, public costmap_2d::Costmap2D
+class DynamicLocalLayer : public costmap_2d::Layer, public costmap_2d::Costmap2D
 {
 public:
-  DynamicLayer();
+  DynamicLocalLayer();
 
   virtual void onInitialize();
   virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x, double* max_y);

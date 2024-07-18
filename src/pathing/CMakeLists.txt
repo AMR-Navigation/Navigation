@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   costmap_2d
   dynamic_reconfigure
   roscpp
+  tf
   messages
 )
 
@@ -209,5 +210,6 @@ include_directories(
 
 include_directories(${catkin_INCLUDE_DIRS} include)
 
-add_library(pathing src/pathing.cpp)
+add_library(pathing src/pathing.cpp src/localpathing.cpp)
+
 

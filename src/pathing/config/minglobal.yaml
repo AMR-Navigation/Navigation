@@ -5,3 +5,5 @@ plugins:
   - {name: pathing, type: "simple_layer_namespace::DynamicLayer"}
 publish_frequency: 1.0
 footprint: [[-0.153, 0.1405], [0.153, 0.1405], [0.153, -0.1405], [-0.153, -0.1405], [-0.153, 0.1405]]
+global_frame: map
+robot_base_frame: base_link
