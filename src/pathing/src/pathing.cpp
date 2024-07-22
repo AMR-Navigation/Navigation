@@ -97,7 +97,8 @@ void DynamicLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, in
 			int index = getIndex(i, j);
 			if (costmap_[index] == NO_INFORMATION)
 				continue;
-			master_grid.setCost(i, j, costmap_[index]); 
+			if (master_grid.getCost(i,j)<costmap_[index]) 
+				master_grid.setCost(i, j, costmap_[index]); 
 			if (costmap_[index]>2) costmap_[index]-=2;
 			else costmap_[index] = FREE_SPACE;
 		}
@@ -128,7 +129,6 @@ void DynamicLayer::setCircleCost(int center_x, int center_y, int radius)
 
 void DynamicLayer::callback(const messages::objectsList::ConstPtr& msg)
 {
-	ROS_INFO("Gooot coords");
 	while (idobjs.size()>0) idobjs.pop_back();
 	for (int i=0;i<msg->matched_objects.size();i++)
 	{

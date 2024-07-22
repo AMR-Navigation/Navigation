@@ -19,7 +19,7 @@ float RES = .05;
 #define CLASS_ROBOT "Robot"
 #define CLASS_SOFA "Sofa"
 #define CLASS_TABLE "Table"
-#define CLASS_UNKNOWN "Unknown"
+#define CLASS_UNKNOWN "unknown"
 
 namespace simple_local_layer_namespace
 {
@@ -130,13 +130,36 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 	if (o.classification==CLASS_UNKNOWN) {
 		// Set circle with radius r and ratefactor 1
 		int r = 20;
+		ROS_INFO("Drawing circle for unknown object");
 		setCircleCost(cx,cy,r,1.);
+
+		// Create circle hopefully one meter ahead of the object
+		coord dircoord;
+		unsigned int dx;
+		unsigned int dy;
+		dircoord.x = badcoord.x+.5*cos(o.direction);
+		dircoord.y = badcoord.y+.5*sin(o.direction);
+		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
+			setCircleCost(dx,dy,7,.5);
+			std::cout << "CREATING DIRECTIONAL OBSTACLE" << std::endl;
+		}
 	} else if (o.classification==CLASS_SOFA or o.classification==CLASS_CHAIR) {
 		int r = 10;
 		setCircleCost(cx,cy,r,4.);
 	} else if (o.classification==CLASS_PEOPLE) {
 		int r=PEOPLERADIUS;
 		setCircleCost(cx,cy,r, .5);
+
+		// Create circle hopefully one meter ahead of the object
+		coord dircoord;
+		unsigned int dx;
+		unsigned int dy;
+		dircoord.x = badcoord.x+cos(o.direction);
+		dircoord.y = badcoord.y+sin(o.direction);
+		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
+			setCircleCost(dx,dy,7,.2);
+			std::cout << "CREATING DIRECTIONAL OBSTACLE" << std::endl;
+		}
 	} else if (o.classification==CLASS_ROBOT) {
 		int r=20;
 		setCircleCost(cx,cy,r, .5);
@@ -194,7 +217,6 @@ bool DynamicLocalLayer::isInEgg(int x, int y, int major, int minor, float direct
 
 void DynamicLocalLayer::callback(const messages::objectsList::ConstPtr& msg)
 {
-	ROS_INFO("Local gooot coords");
 	while (idobjs.size()>0) idobjs.pop_back();
 	for (int i=0;i<msg->matched_objects.size();i++)
 	{
