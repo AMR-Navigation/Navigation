@@ -90,6 +90,21 @@ class ObjectDetectorNode:
 				# Display the image with bounding boxes
 				cv2.imshow('Object Detection', cv_image)
 				cv2.waitKey(1)
+			else:
+				# Create empty detection
+				detection_msg = detection()
+				detection_msg.classification = "None"
+				detection_msg.confidence = 0
+				detection_msg.x = 0
+				detection_msg.y = 0
+				detection_msg.width = 0
+				detection_msg.height = 0
+				# Stamp the detection
+				detection_msg.header.stamp = rospy.Time.now()
+				detection_msg.header.frame_id = "detection"
+
+				# Publish the detection result
+				self.result_pub.publish(detection_msg)
 
 		else:
 			rospy.logwarn("Failed to get valid detection result.")

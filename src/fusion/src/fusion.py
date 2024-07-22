@@ -71,6 +71,7 @@ class Fusion:
     # Arc: (fov, direction)
     def updatedetections(self, detection):
         print("Got new YOLO data")
+        if detection.classification=="None": return
         center_x = detection.x  # x-coordinate for center of the bounding box
         center_y = detection.y  # y-coordinate for center of the bounding box
         classification = detection.classification
