@@ -140,7 +140,7 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		dircoord.x = badcoord.x+.5*cos(o.direction);
 		dircoord.y = badcoord.y+.5*sin(o.direction);
 		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
-			setCircleCost(dx,dy,7,.5);
+			setCircleCost(dx,dy,7,2);
 			std::cout << "CREATING DIRECTIONAL OBSTACLE" << std::endl;
 		}
 	} else if (o.classification==CLASS_SOFA or o.classification==CLASS_CHAIR) {
