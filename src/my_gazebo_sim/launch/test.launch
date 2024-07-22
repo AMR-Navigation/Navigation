@@ -1,0 +1,22 @@
+<launch>
+  <include file="$(find turtlebot3_gazebo)/launch/navigation.launch" />
+
+  <!-- Spawn the model in the Gazebo world -->
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-file $(find my_gazebo_sim)/models/person_standing/model.sdf -sdf -model person_standing -x 0 -y 0 -z 0" />
+
+
+
+<!-- Spawn First TurtleBot -->
+  <group ns = "tb1">
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_waffle_pi.urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+      <param name="publish_frequency" type="double" value="50.0" />
+      <param name="tf_prefix" value="tb1" />
+    </node>
+    
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model burger -x 6 -y 6 -z 0 -Y 0 -param robot_description" />
+  </group>
+  <!-- Run the Python plugin to move the model -->
+ 
+</launch>
