@@ -130,7 +130,7 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 	if (o.classification==CLASS_UNKNOWN) {
 		// Set circle with radius r and ratefactor 1
 		int r = 20;
-		setCircleCost(cx,cy,r,1.);
+		setCircleCost(cx,cy,r,.2);
 
 		// Create circle hopefully one meter ahead of the object
 		/*coord dircoord;
@@ -144,7 +144,7 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		}*/
 	} else if (o.classification==CLASS_SOFA or o.classification==CLASS_CHAIR) {
 		int r = 10;
-		setCircleCost(cx,cy,r,4.);
+		setCircleCost(cx,cy,r,.5);
 	} else if (o.classification==CLASS_PEOPLE) {
 		ROS_INFO("Drawing circle for a PERSON");
 		int r=PEOPLERADIUS;
