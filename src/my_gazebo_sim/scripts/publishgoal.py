@@ -29,6 +29,7 @@ class PublishGoal:
 			goal.pose.orientation.w = 1.0
 			
 			self.pub.publish(goal)
+		exit(0)
 
 	def callback(self, data):
 		for status in data.status_list:
