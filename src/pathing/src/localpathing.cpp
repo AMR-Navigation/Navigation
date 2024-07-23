@@ -114,7 +114,7 @@ void DynamicLocalLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_
 			if (costmap_[index] == NO_INFORMATION)
 				continue;
 			master_grid.setCost(i, j, costmap_[index]); 
-			if (costmap_[index]>2) costmap_[index]-=2;
+			if (costmap_[index]>50) costmap_[index]-=50;
 			else costmap_[index] = FREE_SPACE;
 		}
 	}
@@ -130,11 +130,10 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 	if (o.classification==CLASS_UNKNOWN) {
 		// Set circle with radius r and ratefactor 1
 		int r = 20;
-		ROS_INFO("Drawing circle for unknown object");
 		setCircleCost(cx,cy,r,1.);
 
 		// Create circle hopefully one meter ahead of the object
-		coord dircoord;
+		/*coord dircoord;
 		unsigned int dx;
 		unsigned int dy;
 		dircoord.x = badcoord.x+.5*cos(o.direction);
@@ -142,11 +141,12 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
 			setCircleCost(dx,dy,7,2);
 			std::cout << "CREATING DIRECTIONAL OBSTACLE" << std::endl;
-		}
+		}*/
 	} else if (o.classification==CLASS_SOFA or o.classification==CLASS_CHAIR) {
 		int r = 10;
 		setCircleCost(cx,cy,r,4.);
 	} else if (o.classification==CLASS_PEOPLE) {
+		ROS_INFO("Drawing circle for a PERSON");
 		int r=PEOPLERADIUS;
 		setCircleCost(cx,cy,r, .5);
 
@@ -158,7 +158,6 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		dircoord.y = badcoord.y+sin(o.direction);
 		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
 			setCircleCost(dx,dy,7,.2);
-			std::cout << "CREATING DIRECTIONAL OBSTACLE" << std::endl;
 		}
 	} else if (o.classification==CLASS_ROBOT) {
 		int r=20;

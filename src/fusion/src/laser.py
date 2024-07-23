@@ -16,7 +16,7 @@ def getarc(obj,yaw,x,y):
 	coord_x = obj.mean.x
 	coord_y = obj.mean.y
 	return (min_angle, max_angle), (coord_x,coord_y)
-	#for p in obj.points:
-	#	print p.x-x,p.y-y,": ",atan2(p.x-x,p.y-y)/pi
-	#min_ = min(list(atan(point.y-y/point.x-x) for point in obj.points))
-	#max_ = max(list(atan(point.y-y/point.x-x) for point in obj.points))
+
+
+def getanglefrompoint(x,y,robotx,roboty):
+	return -1*atan2(x-robotx, y-roboty)
