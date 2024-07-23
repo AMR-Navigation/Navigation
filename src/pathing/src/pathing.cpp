@@ -87,7 +87,6 @@ void DynamicLayer::updateBounds(double robot_x, double robot_y, double robot_yaw
 
 void DynamicLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
-	ROS_INFO("Updating global costmap");
 	if (!enabled_)
 		return;
 	
@@ -100,7 +99,7 @@ void DynamicLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, in
 				continue;
 			if (master_grid.getCost(i,j)<costmap_[index]) 
 				master_grid.setCost(i, j, costmap_[index]); 
-			if (costmap_[index]>2) costmap_[index]-=2;
+			if (costmap_[index]>10) costmap_[index]-=10;
 			else costmap_[index] = FREE_SPACE;
 		}
 	}
