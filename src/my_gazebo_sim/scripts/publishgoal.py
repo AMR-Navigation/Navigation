@@ -1,44 +1,37 @@
 #!/usr/bin/env python
+# license removed for brevity
 
 import rospy
-from geometry_msgs.msg import PoseStamped
-from actionlib_msgs.msg import GoalStatusArray
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-GOAL = (4.5,8.5) 														# x,y; ros coords
+GOAL = (4,8)
 
-class PublishGoal:
-	def __init__(self):
-		rospy.init_node('publishgoal', anonymous=True)
-		self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
-		self.status_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, self.callback)
-		self.done = False
+def movebase_client():
 
-	def sendgoal(self):
-		while not self.done:
-			goal = PoseStamped()
-			goal.header.frame_id = "map"
-			goal.header.stamp = rospy.Time.now()
-			
-			goal.pose.position.x = GOAL[0]
-			goal.pose.position.y = GOAL[1]
-			goal.pose.position.z = 0.0
-			
-			goal.pose.orientation.x = 0.0
-			goal.pose.orientation.y = 0.0
-			goal.pose.orientation.z = 0.0
-			goal.pose.orientation.w = 1.0
-			
-			self.pub.publish(goal)
-		exit(0)
+	client = actionlib.SimpleActionClient('move_base',MoveBaseAction)
+	client.wait_for_server()
 
-	def callback(self, data):
-		self.done = True
+	goal = MoveBaseGoal()
+	goal.target_pose.header.frame_id = "map"
+	goal.target_pose.header.stamp = rospy.Time.now()
+	goal.target_pose.pose.position.x = GOAL[0]
+	goal.target_pose.pose.position.y = GOAL[1]
+	goal.target_pose.pose.orientation.w = 1
+	
+	client.send_goal(goal)
+	wait = client.wait_for_result()
+	if not wait:
+		rospy.logerr("Action server not available!")
+		rospy.signal_shutdown("Action server not available!")
+	else:
+		return client.get_result()
 
 if __name__ == '__main__':
 	try:
-		pb = PublishGoal()
-		rospy.loginfo("Sending goal...")
-		pb.sendgoal()
-		rospy.spin()
+		rospy.init_node('movebase_client_py')
+		result = movebase_client()
+		if result:
+			rospy.loginfo("Goal execution done!")
 	except rospy.ROSInterruptException:
-		pass
+		rospy.loginfo("Navigation test finished.")
