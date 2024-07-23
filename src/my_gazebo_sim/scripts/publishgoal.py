@@ -4,13 +4,13 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from actionlib_msgs.msg import GoalStatusArray
 
-GOAL = (0,0) 														# x,y; ros coords
+GOAL = (4.5,8.5) 														# x,y; ros coords
 
 class PublishGoal:
 	def __init__(self):
 		rospy.init_node('publishgoal', anonymous=True)
 		self.pub = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
-		self.status_sub = rospy.Subscriber('move_base/status', GoalStatusArray, self.callback)
+		self.status_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, self.callback)
 		self.done = False
 
 	def sendgoal(self):
@@ -32,11 +32,7 @@ class PublishGoal:
 		exit(0)
 
 	def callback(self, data):
-		for status in data.status_list:
-			if status.status == 3:  # GoalStatus.SUCCEEDED
-				rospy.loginfo("Goal reached!")
-				self.done = True
-				break
+		self.done = True
 
 if __name__ == '__main__':
 	try:
