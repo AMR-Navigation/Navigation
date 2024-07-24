@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- Run the Python plugin for the goal node -->
+  <node name="publishgoal" pkg="my_gazebo_sim" type="publishgoal.py" output="screen"></node>
+
+  <!-- Run the Python plugin to move both of the models -->
+  <node name="move_plugin" pkg="my_gazebo_sim" type="move_plugin.py" output="screen"/>
+
+  <node name="move_person2_plugin" pkg="my_gazebo_sim" type="move_model2.py" output="screen"/>
+</launch>

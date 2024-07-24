@@ -3,6 +3,7 @@
   <arg name="x_pos" default="-2.0"/>
   <arg name="y_pos" default="-0.5"/>
   <arg name="z_pos" default="0.0"/>
+  <arg name="yaw" default="3.14159"/> 
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/navigation.world"/>
@@ -14,9 +15,10 @@
   </include>
 
   <param name="robot_description" command="$(find xacro)/xacro $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+  <!-- Spawn the turtlebot model in the Gazebo world -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg yaw) -param robot_description" />
 
-  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
-
+  <!-- Spawn the human model in the Gazebo world -->
   <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-file $(find my_gazebo_sim)/models/person_standing/model.sdf -sdf -model person_standing -x -3 -y -5 -z 0" />
 
 </launch>

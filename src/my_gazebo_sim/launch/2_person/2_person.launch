@@ -1,0 +1,29 @@
+<launch>
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="x_pos" default="-2.0"/>
+  <arg name="y_pos" default="-0.5"/>
+  <arg name="z_pos" default="0.0"/>
+  <arg name="yaw" default="3.14159"/>
+
+  <!-- Launch the Gazebo world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/navigation.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+  <!-- Spawn the turtlebot model in the Gazebo world -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg yaw) -param robot_description" />
+
+  <!-- Spawn the first human model in the Gazebo world -->
+  <node name="model_1_spawn" pkg="gazebo_ros" type="spawn_model" args="-file $(find my_gazebo_sim)/models/person_standing/model.sdf -sdf -model person_standing -x -3 -y -5 -z 0" />
+
+  <!-- Spawn the second human model in the Gazebo world -->
+  <node name="model_2_spawn" pkg="gazebo_ros" type="spawn_model" args="-file $(find my_gazebo_sim)/models/human_female_3/model.sdf -sdf -model human_female_3 -x 4.35 -y -1.83 -z 0" />
+
+</launch>
