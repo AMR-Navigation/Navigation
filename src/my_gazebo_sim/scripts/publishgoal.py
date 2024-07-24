@@ -5,7 +5,7 @@ import rospy
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-GOAL = (4,8)
+GOAL = (4.5,8.8)
 
 def movebase_client():
 
