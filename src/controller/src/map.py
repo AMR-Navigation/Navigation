@@ -57,23 +57,24 @@ class Map():
 		# bfs
 		while not q.empty():
 			curr = q.get()
-			if visited.get(curr)!=None or curr[0] < 0 or curr[0] > self.width or curr[1] < 0 or curr[1] > self.height: 
+			if visited.get(curr)!=None or curr[0] < 0 or curr[0] >= self.width or curr[1] < 0 or curr[1] >= self.height: 
 				continue   # not legal
 			else: visited[curr] = True
 
 			if self.map[curr[0]][curr[1]]==0:
 				return distances[curr]									# if cell is occupied, return
-			if distances[curr]>15:
-				return 15
+			if distances[curr]>25:
+				return 25
 
 			directions = [(-1, -1), (0, -1), (1, -1),   # Up-left, Left, Down-left
               (1, 0),  (1, 1),  (0, 1),    # Down, Down-right, Right
               (-1, 1), (-1, 0)]            # Up-right, Up
 
 			for d in directions:
-				neighbor = (curr[0]+d[0],curr[1]+d[1])
-				q.put(neighbor)
-				distances[neighbor] = distances[curr]+1
+				neighbor = (curr[0] + d[0], curr[1] + d[1])
+				if neighbor not in visited and neighbor not in distances:
+					q.put(neighbor)
+					distances[neighbor] = distances[curr] + 1
 		return 999999999 # the map is empty lol
 
 
