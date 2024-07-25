@@ -10,8 +10,8 @@ class MovePersonPlugin:
     def __init__(self):
         rospy.init_node('move_person2_plugin')
         self.model_name = 'human_female_3'
-        self.base_speed = 0.1  # base speed in m/s
-        self.min_speed = 0.08  
+        self.base_speed = 0.18  # base speed in m/s
+        self.min_speed = 0.12  
         self.rate = rospy.Rate(10) 
 
         # Wait for services to become available
