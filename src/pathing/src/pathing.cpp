@@ -104,15 +104,15 @@ void DynamicLayer::updateBounds(double robot_x, double robot_y, double robot_yaw
 			rf=.5;
 
 			// Create circle hopefully one meter ahead of the object
-			coord dircoord;
+			/*coord dircoord;
 			unsigned int dx;
 			unsigned int dy;
 			dircoord.x = badcoord.x+2*cos(idobjs[i].direction);
 			dircoord.y = badcoord.y+2*sin(idobjs[i].direction);
 			if (worldToMap(dircoord.x,dircoord.y,dx,dy)) {
-				setCircleCost(dx,dy,20,.3);
+				setCircleCost(dx,dy,15,1);
 				std::cout << "CREATING DIRECTIONAL OBSTACLE IN DIRECTION " << idobjs[i].direction / 3.14159 << "pi" << std::endl;
-			}
+			}*/
 		} else {
 			r = 20;
 			rf=1;
