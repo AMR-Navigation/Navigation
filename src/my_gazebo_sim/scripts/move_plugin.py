@@ -32,10 +32,7 @@ class MovePersonPlugin:
     def define_waypoints(self):
         self.waypoints = [
             (self.start_position.x + 4.0, self.start_position.y),  # Move forward 4 meters
-            (self.start_position.x + 4.0, self.start_position.y - 3.5),  # Move to the right 3.5 meters
-            (self.start_position.x + 9.0, self.start_position.y - 3.5),  # Move forwards 5 meters
-            (self.start_position.x + 4.0, self.start_position.y - 3.5),  # Move backwards 5 meters
-            (self.start_position.x + 4.0, self.start_position.y),        # Move to the left by 3.5 meters
+            (self.start_position.x + 4.0, self.start_position.y - 3.3),  # Move to the right 3.5 meters
             (self.start_position.x, self.start_position.y)               # Return to original position
         ]
 
