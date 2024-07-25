@@ -10,7 +10,7 @@ class MovePersonPlugin:
     def __init__(self):
         rospy.init_node('move_person_plugin')
         self.model_name = 'person_standing'
-        self.base_speed = 0.20  # base speed in m/s
+        self.base_speed = 0.2  # base speed in m/s
         self.min_speed = 0.08  
         self.rate = rospy.Rate(10) 
 
