@@ -20,7 +20,14 @@ struct coord
 	float y;
 };
 
-typedef std::vector<coord> COORDLIST;
+struct object
+{
+	coord location;
+	std::string classification;
+	float direction;
+};
+
+typedef std::vector<object> OBJLIST;
 
 class DynamicLayer : public costmap_2d::Layer, public costmap_2d::Costmap2D
 {
@@ -38,9 +45,9 @@ public:
   virtual void matchSize();
 
   void callback(const messages::objectsList::ConstPtr& msg);
-  void setCircleCost(int center_x, int center_y, int radius);
+  void setCircleCost(int center_x, int center_y, int radius, float ratefactor);
   ros::Subscriber sub;
-  COORDLIST idobjs; // change later
+  OBJLIST idobjs; // change later
   
 
 private:

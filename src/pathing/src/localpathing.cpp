@@ -133,7 +133,7 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		setCircleCost(cx,cy,r,.3);
 
 		// Create circle hopefully one meter ahead of the object
-		/*coord dircoord;
+		coord dircoord;
 		unsigned int dx;
 		unsigned int dy;
 		dircoord.x = badcoord.x+.5*cos(o.direction);
@@ -141,7 +141,7 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
 			setCircleCost(dx,dy,7,2);
 			std::cout << "CREATING DIRECTIONAL OBSTACLE" << std::endl;
-		}*/
+		}
 	} else if (o.classification==CLASS_SOFA or o.classification==CLASS_CHAIR) {
 		int r = 25;
 		setCircleCost(cx,cy,r,.3);
@@ -154,8 +154,8 @@ void DynamicLocalLayer::setcostfor(object o, double robot_x, double robot_y) {
 		coord dircoord;
 		unsigned int dx;
 		unsigned int dy;
-		dircoord.x = badcoord.x+cos(o.direction);
-		dircoord.y = badcoord.y+sin(o.direction);
+		dircoord.x = badcoord.x+.5*cos(o.direction);
+		dircoord.y = badcoord.y+.5*sin(o.direction);
 		if (worldtolocal(dx,dy,dircoord.x,dircoord.y,robot_x,robot_y)) {
 			setCircleCost(dx,dy,7,.2);
 		}
