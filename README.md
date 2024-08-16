@@ -42,7 +42,8 @@ in separate terminals or creating a launch file for all three of them like
 	<node name="controller" pkg="controller" type="controller.py" output="screen"></node>
 	<node name="yolo" pkg="yolo" type="yolo_node.py" output="screen"></node>
 	<node name="fusion" pkg="fusion" type="fusion.py" output="screen"></node>
-</launch>```
+</launch>
+```
 
 and running it. At this point you should have gazebo open, as well as the laser gui from the controller node and possibly a gui with camera output from yolo. Additionally, check the server output and make sure it is receiving image queries. 
 
