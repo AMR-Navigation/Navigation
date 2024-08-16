@@ -37,7 +37,8 @@ This will start the server that allows the ROS Python 2 code to communicate with
 
 in separate terminals or creating a launch file for all three of them like 
 
-```<launch>
+```
+<launch>
 	<node name="controller" pkg="controller" type="controller.py" output="screen"></node>
 	<node name="yolo" pkg="yolo" type="yolo_node.py" output="screen"></node>
 	<node name="fusion" pkg="fusion" type="fusion.py" output="screen"></node>
