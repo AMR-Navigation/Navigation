@@ -69,8 +69,5 @@ If the navigation stack does not seem to be working but there are no obvious err
 ## The static environment
 The static environment we used for experiments can be found in the `worlds` directory. To use it, copy it into the worlds directory of the `turtlebot3_gazebo` package and reference it in launch files with `$(find turtlebot3_gazebo)/worlds/static_navigation.world`. 
 
-## Spawning other models
-
-
 ## Launching experiments
 Most of the experiment launch files can be found in the my_gazebo_sim package. For a given experiment, launch the environment file (e.g. `roslaunch my_gazebo_sim 1_person/1_person.launch`), prepare whatever navigation stack you are testing, and then launch the experiment file (e.g. `roslaunch my_gazebo_sim 1_person/1_person.launch`). You can also create your own experiments in a similar fashion. 
